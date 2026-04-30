@@ -2,6 +2,7 @@
 # ignore
 external/
 build/
+repomix-output.xml
 
 # ---> TeX
 ## Core latex/pdflatex auxiliary files:
