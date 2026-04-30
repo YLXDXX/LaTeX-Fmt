@@ -1,5 +1,7 @@
 
+# ignore
 external/
+build/
 
 # ---> TeX
 ## Core latex/pdflatex auxiliary files:
