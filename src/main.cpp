@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cstring>
+#include <cstdlib>
 #include <vector>
 #include <algorithm>
 #include "core/registry.h"
@@ -40,6 +41,7 @@ static void print_help(const char* prog) {
         << "  --keep-trailing-spaces   Preserve trailing whitespace\n"
         << "  --no-display-math-format Disable display math standalone line formatting\n"
         << "  --no-math-unify          Disable math delimiter unification\n"
+        << "  --config-file=<path>     Read config from file (default: .latexfmtrc)\n"
         << "\n"
         << "Examples:\n"
         << "  " << prog << " paper.tex                  Format to stdout\n"
@@ -197,6 +199,7 @@ int main(int argc, char* argv[]) {
     bool quiet = false;
     std::string output_path;
     std::string input_path;
+    std::string config_file_path;
 
     for (int i = 1; i < argc; ++i) {
         std::string_view arg(argv[i]);
@@ -207,6 +210,32 @@ int main(int argc, char* argv[]) {
         if (arg == "--version" || arg == "-V") {
             print_version();
             return 0;
+        }
+        if (arg.compare(0, 14, "--config-file=") == 0) {
+            config_file_path = std::string(arg.substr(14));
+        }
+    }
+
+    if (!config_file_path.empty()) {
+        if (!config.load_from_file(config_file_path)) {
+            std::cerr << "latex-fmt: warning: could not read config file '"
+                      << config_file_path << "'\n";
+        }
+    } else {
+        if (const char* home = std::getenv("HOME")) {
+            std::string home_rc = std::string(home) + "/.latexfmtrc";
+            config.load_from_file(home_rc);
+        }
+        config.load_from_file(".latexfmtrc");
+    }
+
+    for (int i = 1; i < argc; ++i) {
+        std::string_view arg(argv[i]);
+        if (arg == "--help" || arg == "-h" || arg == "--version" || arg == "-V") {
+            continue;
+        }
+        if (arg.compare(0, 14, "--config-file=") == 0) {
+            continue;
         }
         if (arg == "-i") {
             in_place = true;
@@ -245,28 +274,56 @@ int main(int argc, char* argv[]) {
             config.cjk_spacing = false;
             continue;
         }
+        if (arg == "--cjk-spacing") {
+            config.cjk_spacing = true;
+            continue;
+        }
         if (arg == "--no-brace-completion") {
             config.brace_completion = false;
+            continue;
+        }
+        if (arg == "--brace-completion") {
+            config.brace_completion = true;
             continue;
         }
         if (arg == "--no-comment-normalize") {
             config.comment_normalize = false;
             continue;
         }
+        if (arg == "--comment-normalize") {
+            config.comment_normalize = true;
+            continue;
+        }
         if (arg == "--no-blank-line-compress") {
             config.blank_line_compress = false;
+            continue;
+        }
+        if (arg == "--blank-line-compress") {
+            config.blank_line_compress = true;
             continue;
         }
         if (arg == "--keep-trailing-spaces") {
             config.trailing_whitespace_remove = false;
             continue;
         }
+        if (arg == "--remove-trailing-spaces") {
+            config.trailing_whitespace_remove = true;
+            continue;
+        }
         if (arg == "--no-display-math-format") {
             config.display_math_format = false;
             continue;
         }
+        if (arg == "--display-math-format") {
+            config.display_math_format = true;
+            continue;
+        }
         if (arg == "--no-math-unify") {
             config.math_delimiter_unify = false;
+            continue;
+        }
+        if (arg == "--math-unify") {
+            config.math_delimiter_unify = true;
             continue;
         }
         if (arg.size() > 0 && arg[0] == '-') {
