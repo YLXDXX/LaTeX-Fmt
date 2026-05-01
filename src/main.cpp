@@ -27,6 +27,7 @@ static void print_help(const char* prog) {
         << "  -o <file>           Write output to file\n"
         << "  --check             Check if file needs formatting (exit 1 if changes needed)\n"
         << "  --diff              Show unified diff instead of formatted output\n"
+        << "  --quiet, -q          Suppress warnings\n"
         << "  --max-line-width=N  Warn when a line exceeds N characters (default: 0 = off)\n"
         << "\n"
         << "Examples:\n"
@@ -181,6 +182,7 @@ int main(int argc, char* argv[]) {
     bool in_place = false;
     bool check_only = false;
     bool diff_mode = false;
+    bool quiet = false;
     std::string output_path;
     std::string input_path;
 
@@ -213,6 +215,10 @@ int main(int argc, char* argv[]) {
         }
         if (arg == "--diff") {
             diff_mode = true;
+            continue;
+        }
+        if (arg == "--quiet" || arg == "-q") {
+            quiet = true;
             continue;
         }
         if (arg.compare(0, 17, "--max-line-width=") == 0) {
@@ -274,8 +280,10 @@ int main(int argc, char* argv[]) {
 
     if (check_only) {
         bool needs_fmt = (input != result);
-        for (const auto& w : visitor.getWarnings()) {
-            std::cerr << "WARNING: " << w << "\n";
+        if (!quiet) {
+            for (const auto& w : visitor.getWarnings()) {
+                std::cerr << "WARNING: " << w << "\n";
+            }
         }
         if (needs_fmt) {
             if (!input_path.empty()) {
@@ -295,8 +303,10 @@ int main(int argc, char* argv[]) {
         if (!diff.empty()) {
             std::cout << diff;
         }
-        for (const auto& w : visitor.getWarnings()) {
-            std::cerr << "WARNING: " << w << "\n";
+        if (!quiet) {
+            for (const auto& w : visitor.getWarnings()) {
+                std::cerr << "WARNING: " << w << "\n";
+            }
         }
         return diff.empty() ? 0 : 1;
     }
@@ -309,8 +319,10 @@ int main(int argc, char* argv[]) {
         std::cout << result;
     }
 
-    for (const auto& w : visitor.getWarnings()) {
-        std::cerr << "WARNING: " << w << "\n";
+    if (!quiet) {
+        for (const auto& w : visitor.getWarnings()) {
+            std::cerr << "WARNING: " << w << "\n";
+        }
     }
 
     return 0;
