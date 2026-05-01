@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include "core/registry.h"
+#include "core/config.h"
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
@@ -21,19 +22,30 @@ static void print_help(const char* prog) {
         << "  " << prog << " [options] < input.tex > output.tex\n"
         << "\n"
         << "Options:\n"
-        << "  --help, -h          Show this help message and exit\n"
-        << "  --version, -V       Show version and exit\n"
-        << "  -i                  Format file in-place\n"
-        << "  -o <file>           Write output to file\n"
-        << "  --check             Check if file needs formatting (exit 1 if changes needed)\n"
-        << "  --diff              Show unified diff instead of formatted output\n"
-        << "  --quiet, -q          Suppress warnings\n"
-        << "  --max-line-width=N  Warn when a line exceeds N characters (default: 0 = off)\n"
+        << "  --help, -h               Show this help message and exit\n"
+        << "  --version, -V            Show version and exit\n"
+        << "  -i                       Format file in-place\n"
+        << "  -o <file>                Write output to file\n"
+        << "  --check                  Check if file needs formatting (exit 1 if changes needed)\n"
+        << "  --diff                   Show unified diff instead of formatted output\n"
+        << "  --quiet, -q              Suppress warnings\n"
+        << "\n"
+        << "Formatting options:\n"
+        << "  --indent-width=N         Set indentation width (default: 2)\n"
+        << "  --max-line-width=N       Warn when a line exceeds N chars (default: 0 = off)\n"
+        << "  --no-cjk-spacing         Disable auto spacing between CJK and ASCII chars\n"
+        << "  --no-brace-completion    Disable brace completion for commands like \\frac\n"
+        << "  --no-comment-normalize   Disable comment normalization\n"
+        << "  --no-blank-line-compress Disable consecutive blank line compression\n"
+        << "  --keep-trailing-spaces   Preserve trailing whitespace\n"
+        << "  --no-display-math-format Disable display math standalone line formatting\n"
+        << "  --no-math-unify          Disable math delimiter unification\n"
         << "\n"
         << "Examples:\n"
         << "  " << prog << " paper.tex                  Format to stdout\n"
         << "  " << prog << " -i paper.tex                Format file in-place\n"
         << "  " << prog << " -o out.tex paper.tex        Format to output file\n"
+        << "  " << prog << " --indent-width=4 paper.tex  Use 4-space indentation\n"
         << "  " << prog << " < input.tex > output.tex    Pipe from stdin\n";
 }
 
@@ -178,7 +190,7 @@ static std::string generate_unified_diff(
 }
 
 int main(int argc, char* argv[]) {
-    int max_line_width = 0;
+    latex_fmt::FormatConfig config;
     bool in_place = false;
     bool check_only = false;
     bool diff_mode = false;
@@ -222,7 +234,39 @@ int main(int argc, char* argv[]) {
             continue;
         }
         if (arg.compare(0, 17, "--max-line-width=") == 0) {
-            max_line_width = std::stoi(std::string(arg.substr(17)));
+            config.max_line_width = std::stoi(std::string(arg.substr(17)));
+            continue;
+        }
+        if (arg.compare(0, 15, "--indent-width=") == 0) {
+            config.indent_width = std::stoi(std::string(arg.substr(15)));
+            continue;
+        }
+        if (arg == "--no-cjk-spacing") {
+            config.cjk_spacing = false;
+            continue;
+        }
+        if (arg == "--no-brace-completion") {
+            config.brace_completion = false;
+            continue;
+        }
+        if (arg == "--no-comment-normalize") {
+            config.comment_normalize = false;
+            continue;
+        }
+        if (arg == "--no-blank-line-compress") {
+            config.blank_line_compress = false;
+            continue;
+        }
+        if (arg == "--keep-trailing-spaces") {
+            config.trailing_whitespace_remove = false;
+            continue;
+        }
+        if (arg == "--no-display-math-format") {
+            config.display_math_format = false;
+            continue;
+        }
+        if (arg == "--no-math-unify") {
+            config.math_delimiter_unify = false;
             continue;
         }
         if (arg.size() > 0 && arg[0] == '-') {
@@ -273,7 +317,7 @@ int main(int argc, char* argv[]) {
     latex_fmt::Parser parser(std::move(tokens), input, registry);
     auto ast = parser.parse();
 
-    latex_fmt::FormatVisitor visitor(registry, input, max_line_width);
+    latex_fmt::FormatVisitor visitor(registry, input, config);
     visitor.visit(*ast);
 
     std::string result = visitor.extractOutput();

@@ -5,6 +5,7 @@
 #include "parse/ast.h"
 #include "core/registry.h"
 #include "core/unicode_width.h"
+#include "core/config.h"
 #include "format/math_aligner.h"
 
 namespace latex_fmt {
@@ -55,9 +56,13 @@ namespace latex_fmt {
         FormatVisitor(const Registry& registry, std::string_view source)
         : registry_(registry), source_(source), at_line_start_(true) {}
 
+        FormatVisitor(const Registry& registry, std::string_view source, const FormatConfig& config)
+        : registry_(registry), source_(source), at_line_start_(true), config_(config) {}
+
         FormatVisitor(const Registry& registry, std::string_view source, int max_line_width)
-        : registry_(registry), source_(source), at_line_start_(true),
-          max_line_width_(max_line_width) {}
+        : registry_(registry), source_(source), at_line_start_(true) {
+            config_.max_line_width = max_line_width;
+        }
 
         void visit(const Document& n) {
             for (const auto& child : n.children) {
@@ -226,8 +231,12 @@ namespace latex_fmt {
                     output_ << g->delim_close;
                     endOutput(CharCategory::ASCII);
                 } else if (auto* t = dynamic_cast<const Text*>(arg.get())) {
-                    if (t->content.size() == 1 && t->content != "{" && t->content != "[" &&
-                        i >= (size_t)sig->optional_args && sig->mandatory_braces) {
+                    bool do_brace = config_.brace_completion
+                        && t->content.size() == 1
+                        && t->content != "{" && t->content != "["
+                        && i >= (size_t)sig->optional_args
+                        && sig->mandatory_braces;
+                    if (do_brace) {
                         writeText("{" + t->content + "}");
                         endOutput(CharCategory::ASCII);
                     } else {
@@ -296,10 +305,12 @@ namespace latex_fmt {
                     }
 
                     bool need_space = false;
-                    if (prev_cat == CharCategory::CJK && cat == CharCategory::ASCII) {
-                        need_space = true;
-                    } else if (prev_cat == CharCategory::ASCII && cat == CharCategory::CJK) {
-                        need_space = true;
+                    if (config_.cjk_spacing) {
+                        if (prev_cat == CharCategory::CJK && cat == CharCategory::ASCII) {
+                            need_space = true;
+                        } else if (prev_cat == CharCategory::ASCII && cat == CharCategory::CJK) {
+                            need_space = true;
+                        }
                     }
 
                     if (need_space && !output_ends_space_) {
@@ -337,7 +348,7 @@ namespace latex_fmt {
             flushPendingSpace();
             std::string text = n.text;
 
-            if (text.size() >= 1 && text[0] == '%') {
+            if (config_.comment_normalize && text.size() >= 1 && text[0] == '%') {
                 std::string body = text.substr(1);
 
                 size_t start = body.find_first_not_of(" \t");
@@ -375,7 +386,9 @@ namespace latex_fmt {
 
         void visit(const ParBreak& n) {
             flushPendingSpace();
-            ensureNewline();
+            if (config_.blank_line_compress) {
+                ensureNewline();
+            }
             output_ << "\n";
             at_line_start_ = true;
             endOutput(CharCategory::Other);
@@ -392,34 +405,64 @@ namespace latex_fmt {
             }
             flushPendingSpace();
 
-            writeText("$");
+            bool use_dollar = config_.math_delimiter_unify || n.is_dollar_form;
+            if (use_dollar) {
+                writeText("$");
+            } else {
+                writeText("\\(");
+            }
 
             endOutput(CharCategory::ASCII);
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
-            writeText("$");
+            if (use_dollar) {
+                writeText("$");
+            } else {
+                writeText("\\)");
+            }
             endOutput(CharCategory::ASCII);
         }
 
         void visit(const DisplayMath& n) {
             flushPendingSpace();
 
-            ensureNewline();
-            output_ << "$$";
-            at_line_start_ = false;
-            ensureNewline();
+            bool use_dollar = config_.math_delimiter_unify || n.is_dollar_form;
 
-            indent_level_++;
+            if (config_.display_math_format) {
+                ensureNewline();
+            }
+            if (use_dollar) {
+                output_ << "$$";
+            } else {
+                output_ << "\\[";
+            }
+            at_line_start_ = false;
+
+            if (config_.display_math_format) {
+                ensureNewline();
+                indent_level_++;
+            }
+
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
-            indent_level_--;
 
-            ensureNewline();
-            output_ << "$$";
+            if (config_.display_math_format) {
+                indent_level_--;
+                ensureNewline();
+            }
+
+            if (use_dollar) {
+                output_ << "$$";
+            } else {
+                output_ << "\\]";
+            }
             at_line_start_ = false;
-            ensureNewline();
+
+            if (config_.display_math_format) {
+                ensureNewline();
+            }
 
             endOutput(CharCategory::ASCII);
         }
@@ -470,10 +513,10 @@ namespace latex_fmt {
         CharCategory last_char_cat_ = CharCategory::None;
         bool pending_space_ = false;
         bool output_ends_space_ = false;
-        int max_line_width_ = 0;
         int line_pos_ = 0;
         int line_number_ = 1;
         mutable std::vector<std::string> warnings_;
+        FormatConfig config_;
 
         struct ScopedBuffer {
             std::ostringstream temp;
@@ -518,7 +561,7 @@ namespace latex_fmt {
         }
 
         std::string getIndent() const {
-            return std::string(indent_level_ * 2, ' ');
+            return std::string(indent_level_ * config_.indent_width, ' ');
         }
 
         void flushPendingSpace() {
@@ -549,9 +592,10 @@ namespace latex_fmt {
                 output_ << text;
                 line_pos_ += static_cast<int>(text.size());
             }
-            if (max_line_width_ > 0 && line_pos_ > max_line_width_) {
+            auto mw = config_.max_line_width;
+            if (mw > 0 && line_pos_ > mw) {
                 warnings_.push_back("line " + std::to_string(line_number_)
-                    + ": exceeds max width " + std::to_string(max_line_width_)
+                    + ": exceeds max width " + std::to_string(mw)
                     + " (" + std::to_string(line_pos_) + " chars)");
             }
         }
@@ -559,11 +603,13 @@ namespace latex_fmt {
         void ensureNewline() {
             if (at_line_start_) return;
 
-            std::string out = output_.str();
-            size_t last_non_space = out.find_last_not_of(" \t");
-            if (last_non_space != std::string::npos && last_non_space + 1 < out.size()) {
-                output_.str(out.substr(0, last_non_space + 1));
-                output_.seekp(0, std::ios::end);
+            if (config_.trailing_whitespace_remove) {
+                std::string out = output_.str();
+                size_t last_non_space = out.find_last_not_of(" \t");
+                if (last_non_space != std::string::npos && last_non_space + 1 < out.size()) {
+                    output_.str(out.substr(0, last_non_space + 1));
+                    output_.seekp(0, std::ios::end);
+                }
             }
 
             output_ << "\n";
