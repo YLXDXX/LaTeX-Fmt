@@ -114,23 +114,9 @@ namespace latex_fmt {
                 std::vector<std::string> lines;
                 std::ostringstream current_line;
                 for (const auto& child : n.children) {
-                    std::ostringstream temp;
-                    std::swap(output_, temp);
-                    bool saved_ls = at_line_start_;
-                    CharCategory saved_lc = last_char_cat_;
-                    bool saved_ps = pending_space_;
-                    bool saved_es = output_ends_space_;
-                    at_line_start_ = false;
-                    last_char_cat_ = CharCategory::None;
-                    pending_space_ = false;
-                    output_ends_space_ = false;
+                    ScopedBuffer buf(*this);
                     visitNode(*child);
-                    std::swap(output_, temp);
-                    at_line_start_ = saved_ls;
-                    last_char_cat_ = saved_lc;
-                    pending_space_ = saved_ps;
-                    output_ends_space_ = saved_es;
-                    std::string part = temp.str();
+                    std::string part = buf.str();
 
                     size_t pos = 0;
                     while (pos < part.size()) {
@@ -446,6 +432,35 @@ namespace latex_fmt {
         CharCategory last_char_cat_ = CharCategory::None;
         bool pending_space_ = false;
         bool output_ends_space_ = false;
+
+        struct ScopedBuffer {
+            std::ostringstream temp;
+            bool saved_ls, saved_ps, saved_es;
+            CharCategory saved_lc;
+            FormatVisitor& v;
+
+            ScopedBuffer(FormatVisitor& vis) : v(vis) {
+                std::swap(v.output_, temp);
+                saved_ls = v.at_line_start_;
+                saved_lc = v.last_char_cat_;
+                saved_ps = v.pending_space_;
+                saved_es = v.output_ends_space_;
+                v.at_line_start_ = false;
+                v.last_char_cat_ = CharCategory::None;
+                v.pending_space_ = false;
+                v.output_ends_space_ = false;
+            }
+
+            ~ScopedBuffer() {
+                std::swap(v.output_, temp);
+                v.at_line_start_ = saved_ls;
+                v.last_char_cat_ = saved_lc;
+                v.pending_space_ = saved_ps;
+                v.output_ends_space_ = saved_es;
+            }
+
+            std::string str() const { return v.output_.str(); }
+        };
 
         void endOutput(CharCategory cat) {
             last_char_cat_ = cat;
