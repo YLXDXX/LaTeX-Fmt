@@ -55,6 +55,10 @@ namespace latex_fmt {
         FormatVisitor(const Registry& registry, std::string_view source)
         : registry_(registry), source_(source), at_line_start_(true) {}
 
+        FormatVisitor(const Registry& registry, std::string_view source, int max_line_width)
+        : registry_(registry), source_(source), at_line_start_(true),
+          max_line_width_(max_line_width) {}
+
         void visit(const Document& n) {
             for (const auto& child : n.children) {
                 visitNode(*child);
@@ -247,6 +251,7 @@ namespace latex_fmt {
             }
 
             output_ << n.delim_open;
+            line_pos_ += static_cast<int>(n.delim_open.size());
             endOutput(CharCategory::ASCII);
 
             for (const auto& child : n.children) {
@@ -254,6 +259,7 @@ namespace latex_fmt {
             }
 
             output_ << n.delim_close;
+            line_pos_ += static_cast<int>(n.delim_close.size());
             endOutput(CharCategory::ASCII);
         }
 
@@ -451,6 +457,10 @@ namespace latex_fmt {
             return out;
         }
 
+        const std::vector<std::string>& getWarnings() const {
+            return warnings_;
+        }
+
     private:
         std::ostringstream output_;
         int indent_level_ = 0;
@@ -460,6 +470,10 @@ namespace latex_fmt {
         CharCategory last_char_cat_ = CharCategory::None;
         bool pending_space_ = false;
         bool output_ends_space_ = false;
+        int max_line_width_ = 0;
+        int line_pos_ = 0;
+        int line_number_ = 1;
+        mutable std::vector<std::string> warnings_;
 
         struct ScopedBuffer {
             std::ostringstream temp;
@@ -530,8 +544,15 @@ namespace latex_fmt {
                 output_ << getIndent();
                 at_line_start_ = false;
                 output_ << text.substr(first_non_space);
+                line_pos_ = static_cast<int>(first_non_space) + indent_level_ * 2;
             } else {
                 output_ << text;
+                line_pos_ += static_cast<int>(text.size());
+            }
+            if (max_line_width_ > 0 && line_pos_ > max_line_width_) {
+                warnings_.push_back("line " + std::to_string(line_number_)
+                    + ": exceeds max width " + std::to_string(max_line_width_)
+                    + " (" + std::to_string(line_pos_) + " chars)");
             }
         }
 
@@ -547,6 +568,8 @@ namespace latex_fmt {
 
             output_ << "\n";
             at_line_start_ = true;
+            line_pos_ = 0;
+            line_number_++;
         }
     };
 
