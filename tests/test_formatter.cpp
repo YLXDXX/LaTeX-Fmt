@@ -193,6 +193,36 @@ namespace latex_fmt {
         SECTION("frac34 in inline math") {
             REQUIRE(format_code("$\\frac34$") == "$\\frac{3}{4}$");
         }
+
+        SECTION("frac with space between command and args") {
+            REQUIRE(format_code("$\\frac 12 $") == "$\\frac{1}{2} $");
+        }
+
+        SECTION("frac with space between args") {
+            REQUIRE(format_code("$\\frac1 2 $") == "$\\frac{1}{2} $");
+        }
+
+        SECTION("frac with spaces everywhere") {
+            REQUIRE(format_code("$\\frac 1 2 $") == "$\\frac{1}{2} $");
+        }
+
+        SECTION("frac with space between args, no trailing space") {
+            REQUIRE(format_code("$\\frac1 2$") == "$\\frac{1}{2}$");
+        }
+
+        SECTION("frac with space after command only") {
+            REQUIRE(format_code("$\\frac 12$") == "$\\frac{1}{2}$");
+        }
+    }
+
+    TEST_CASE("R2: brace completion for \\sqrt", "[formatter][R2]") {
+        SECTION("sqrt with braces already") {
+            REQUIRE(format_code("\\sqrt{2}") == "\\sqrt{2}");
+        }
+
+        SECTION("sqrt with optional arg and space") {
+            REQUIRE(format_code("\\sqrt [3] 2") == "\\sqrt[3]{2}");
+        }
     }
 
     TEST_CASE("R2: unknown commands are not modified", "[formatter][R2]") {

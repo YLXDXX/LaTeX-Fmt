@@ -189,13 +189,29 @@ namespace latex_fmt {
                 return cmd;
             }
 
+            auto skipWhitespace = [&]() {
+                while (peek().type == TokenType::Text && !peek().value.empty()) {
+                    bool all_space = true;
+                    for (char ch : peek().value) {
+                        if (ch != ' ' && ch != '\t') { all_space = false; break; }
+                    }
+                    if (!all_space) break;
+                    advance();
+                }
+            };
+
             for (int i = 0; i < sig->optional_args; ++i) {
+                size_t saved = pos_;
+                skipWhitespace();
                 if (peek().type == TokenType::OpenBracket) {
                     cmd->args.push_back(parseGroup(TokenType::OpenBracket, TokenType::CloseBracket));
+                } else {
+                    pos_ = saved;
                 }
             }
 
             for (int i = 0; i < sig->mandatory_args; ++i) {
+                skipWhitespace();
                 if (peek().type == TokenType::OpenBrace) {
                     cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace));
                 } else if (sig->mandatory_braces && peek().type == TokenType::Text && !peek().value.empty() && !tokens_[pos_].value.empty()) {
