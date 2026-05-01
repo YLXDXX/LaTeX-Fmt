@@ -23,6 +23,7 @@ static void print_help(const char* prog) {
         << "  --version, -V       Show version and exit\n"
         << "  -i                  Format file in-place\n"
         << "  -o <file>           Write output to file\n"
+        << "  --check             Check if file needs formatting (exit 1 if changes needed)\n"
         << "  --max-line-width=N  Warn when a line exceeds N characters (default: 0 = off)\n"
         << "\n"
         << "Examples:\n"
@@ -61,6 +62,7 @@ static bool write_output(const std::string& path, const std::string& content) {
 int main(int argc, char* argv[]) {
     int max_line_width = 0;
     bool in_place = false;
+    bool check_only = false;
     std::string output_path;
     std::string input_path;
 
@@ -87,6 +89,10 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
+        if (arg == "--check") {
+            check_only = true;
+            continue;
+        }
         if (arg.compare(0, 17, "--max-line-width=") == 0) {
             max_line_width = std::stoi(std::string(arg.substr(17)));
             continue;
@@ -106,6 +112,11 @@ int main(int argc, char* argv[]) {
 
     if (in_place && !output_path.empty()) {
         std::cerr << "latex-fmt: error: -i and -o cannot be used together\n";
+        return 1;
+    }
+
+    if (check_only && (in_place || !output_path.empty())) {
+        std::cerr << "latex-fmt: error: --check cannot be used with -i or -o\n";
         return 1;
     }
 
@@ -133,6 +144,22 @@ int main(int argc, char* argv[]) {
     visitor.visit(*ast);
 
     std::string result = visitor.extractOutput();
+
+    if (check_only) {
+        bool needs_fmt = (input != result);
+        for (const auto& w : visitor.getWarnings()) {
+            std::cerr << "WARNING: " << w << "\n";
+        }
+        if (needs_fmt) {
+            if (!input_path.empty()) {
+                std::cerr << input_path << ": needs formatting\n";
+            } else {
+                std::cerr << "<stdin>: needs formatting\n";
+            }
+            return 1;
+        }
+        return 0;
+    }
 
     if (in_place) {
         if (!write_output(input_path, result)) return 1;
