@@ -121,6 +121,33 @@ MIT
 |------|------|------|
 | `\frac` | `{2}` | 分数（如 `\frac{1}{2}`） |
 | `\sqrt` | `[1]{1}` | 根号（可选次数，如 `\sqrt[3]{x}`） |
+| `\binom` | `{2}` | 二项式系数 |
+
+#### 数学修饰命令
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\stackrel` | `{2}` | 堆叠符号（上/下） |
+| `\overset` | `{2}` | 上方堆叠 |
+| `\underset` | `{2}` | 下方堆叠 |
+| `\substack` | `{1}` | 多行下标（`\\` 分隔） |
+| `\text` | `{1}` | 数学模式中的文本 |
+| `\operatorname` | `{1}` | 自定义运算符名 |
+| `\tag` / `\tag*` | `{1}` | 公式编号 |
+| `\notag` / `\nonumber` | — | 取消公式编号 |
+| `\limits` / `\nolimits` / `\displaylimits` | — | 极限位置控制 |
+| `\displaystyle` / `\textstyle` / `\scriptstyle` / `\scriptscriptstyle` | — | 数学样式 |
+| `\smash` / `\mathclap` / `\mathrlap` / `\mathllap` | — | 边界盒控制 |
+| `\dd` | — | 微分算子 d |
+
+#### 自定义命令与声明
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\DeclareMathOperator` | `{2}` | 声明数学运算符 |
+| `\newcommand` / `\renewcommand` / `\providecommand` | — | 自定义命令（参数作为独立 Group 节点解析） |
+| `\newenvironment` / `\renewenvironment` | — | 自定义环境 |
+| `\ensuremath` | `{1}` | 确保数学模式（支持花括号补全） |
 
 #### 文档结构（1 个必选参数，支持花括号补全）
 
@@ -292,12 +319,23 @@ MIT
 | 环境 | 对齐策略 | 说明 |
 |------|---------|------|
 | `align` / `align*` | `&` 交替对齐 | 多行公式对齐 |
+| `aligned` | `&` 交替对齐 | 子公式块（需嵌套） |
+| `alignedat` | `&` 交替对齐 | 定列数对齐块 |
+| `flalign` / `flalign*` | `&` 交替对齐 | 满幅对齐 |
 | `gather` / `gather*` | 无 | 多行公式居中 |
+| `gathered` | 无 | 居中子公式块 |
+| `split` | `&` 交替对齐 | 单公式多行拆分 |
 | `equation` / `equation*` | 无 | 单行公式 |
+| `multline` / `multline*` | 无 | 长公式（首行左、末行右） |
 | `pmatrix` | 矩阵等宽列 | 圆括号矩阵 |
 | `bmatrix` | 矩阵等宽列 | 方括号矩阵 |
-| `vmatrix` | 矩阵等宽列 | 行列式 |
+| `Bmatrix` | 矩阵等宽列 | 花括号矩阵 |
+| `vmatrix` | 矩阵等宽列 | 行列式（单竖线） |
+| `Vmatrix` | 矩阵等宽列 | 行列式（双竖线） |
+| `matrix` | 矩阵等宽列 | 无括号矩阵 |
+| `smallmatrix` | 矩阵等宽列 | 小型矩阵（行内） |
 | `cases` | 分支对齐 | 分段函数 |
+| `dcases` | 分支对齐 | displaystyle 分段函数 |
 
 #### 列表环境
 
