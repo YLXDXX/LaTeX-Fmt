@@ -415,6 +415,34 @@ TEST_CASE("CLI: --wrap-paragraphs", "[cli]") {
     std::filesystem::remove(f);
 }
 
+TEST_CASE("CLI: --wrap all line types", "[cli]") {
+    std::string f = tmp_path("wrap_all.tex");
+    std::string long_text = "This is a very long line of text that should be wrapped when wrap mode is active and the line is long enough.\n";
+    write_file(f, long_text);
+
+    SECTION("--wrap wraps non-comment lines") {
+        auto r = run_cmd("--max-line-width=40 --wrap " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("\n"));
+    }
+
+    std::filesystem::remove(f);
+}
+
+TEST_CASE("CLI: --wrap-paragraphs with inline math", "[cli]") {
+    std::string f = tmp_path("wrap_math.tex");
+    std::string text = "This long paragraph has inline math $x=y$ and should still be wrapped into multiple lines when exceeding max width.\n";
+    write_file(f, text);
+
+    SECTION("--wrap-paragraphs wraps prose lines containing inline $") {
+        auto r = run_cmd("--max-line-width=40 --wrap-paragraphs " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("\n"));
+    }
+
+    std::filesystem::remove(f);
+}
+
 TEST_CASE("CLI: --config-file", "[cli]") {
     std::string rc = tmp_path("testrc");
     write_file(rc, "cjk_spacing = false\nbrace_completion = false\nindent_width = 4\n");

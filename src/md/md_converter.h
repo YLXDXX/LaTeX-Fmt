@@ -48,8 +48,10 @@ private:
 
     // Each step is a standalone method — add new steps here to extend
     struct CodeSpan { std::string content; };
+    struct MathSpan { std::string content; bool display; };
 
     std::string extractCodeSpans(std::string text, std::vector<CodeSpan>& out);
+    std::string extractMathSpans(std::string text, std::vector<MathSpan>& out);
     std::string convertEscapedChars(std::string text);
     std::string escapeLatexSpecials(std::string text);
     std::string convertLinks(std::string text);
@@ -57,6 +59,7 @@ private:
     std::string protectLatexCommands(std::string text, std::vector<std::string>& out);
     std::string restoreLatexCommands(std::string text, const std::vector<std::string>& cmds);
     std::string restoreCodeSpans(std::string text, const std::vector<CodeSpan>& codes);
+    std::string restoreMathSpans(std::string text, const std::vector<MathSpan>& math);
 
     // ═══════════════════════════════════════════
     //  Utility
@@ -342,7 +345,9 @@ inline std::string MdConverter::convertList(std::vector<std::string>& items,
 
 inline std::string MdConverter::convertInline(std::string text) {
     std::vector<CodeSpan> codes;
+    std::vector<MathSpan> math;
     text = extractCodeSpans(std::move(text), codes);
+    text = extractMathSpans(std::move(text), math);
     text = convertEscapedChars(std::move(text));
     text = convertLinks(std::move(text));
     text = convertEmphasis(std::move(text));
@@ -352,6 +357,7 @@ inline std::string MdConverter::convertInline(std::string text) {
     text = escapeLatexSpecials(std::move(text));
     text = restoreLatexCommands(std::move(text), latex_cmds);
 
+    text = restoreMathSpans(std::move(text), math);
     text = restoreCodeSpans(std::move(text), codes);
     return text;
 }
@@ -386,6 +392,50 @@ inline std::string MdConverter::extractCodeSpans(std::string text,
                 ++marker_idx;
                 pos = end + 1;
                 continue;
+            }
+        }
+        result += text[pos];
+        ++pos;
+    }
+    return result;
+}
+
+// ───────────────────────────────────────────────
+//  Step 1b: Extract inline math spans $...$ and $$...$$
+// ───────────────────────────────────────────────
+
+inline std::string MdConverter::extractMathSpans(std::string text,
+                                                   std::vector<MathSpan>& out) {
+    std::string result;
+    size_t pos = 0;
+    size_t marker_idx = 0;
+
+    while (pos < text.size()) {
+        if (text[pos] == '$') {
+            if (pos + 1 < text.size() && text[pos + 1] == '$') {
+                size_t end = text.find("$$", pos + 2);
+                if (end != std::string::npos) {
+                    std::string math = text.substr(pos + 2, end - pos - 2);
+                    result += '\x04';
+                    result += std::to_string(marker_idx);
+                    result += '\x04';
+                    out.push_back({math, true});
+                    ++marker_idx;
+                    pos = end + 2;
+                    continue;
+                }
+            } else {
+                size_t end = text.find('$', pos + 1);
+                if (end != std::string::npos && end > pos + 1) {
+                    std::string math = text.substr(pos + 1, end - pos - 1);
+                    result += '\x04';
+                    result += std::to_string(marker_idx);
+                    result += '\x04';
+                    out.push_back({math, false});
+                    ++marker_idx;
+                    pos = end + 1;
+                    continue;
+                }
             }
         }
         result += text[pos];
@@ -659,7 +709,36 @@ inline std::string MdConverter::restoreLatexCommands(std::string text,
 }
 
 // ───────────────────────────────────────────────
-//  Step 7: Restore code spans as \texttt{...}
+//  Step 7: Restore math spans unchanged
+// ───────────────────────────────────────────────
+
+inline std::string MdConverter::restoreMathSpans(std::string text,
+                                                   const std::vector<MathSpan>& math) {
+    std::string result;
+    size_t pos = 0;
+    while (pos < text.size()) {
+        if (text[pos] == '\x04') {
+            size_t end = text.find('\x04', pos + 1);
+            if (end != std::string::npos) {
+                std::string idx_str = text.substr(pos + 1, end - pos - 1);
+                int idx = std::stoi(idx_str);
+                if (math[idx].display) {
+                    result += "$$" + math[idx].content + "$$";
+                } else {
+                    result += "$" + math[idx].content + "$";
+                }
+                pos = end + 1;
+                continue;
+            }
+        }
+        result += text[pos];
+        ++pos;
+    }
+    return result;
+}
+
+// ───────────────────────────────────────────────
+//  Step 8: Restore code spans as \texttt{...}
 // ───────────────────────────────────────────────
 
 inline std::string MdConverter::restoreCodeSpans(std::string text,

@@ -248,6 +248,28 @@ TEST_CASE("Markdown: combined features", "[md]") {
     }
 }
 
+TEST_CASE("Markdown: LaTeX math passthrough", "[md]") {
+    SECTION("inline math preserved") {
+        std::string result = convert("text with $x^2 + y^2 = z^2$ inline math\n");
+        REQUIRE(result.find("$x^2 + y^2 = z^2$") != std::string::npos);
+    }
+
+    SECTION("display math preserved") {
+        std::string result = convert("text with\n\n$$\\sum_{i=1}^{n} x_i$$\n\nmore text\n");
+        REQUIRE(result.find("$$\\sum_{i=1}^{n} x_i$$") != std::string::npos);
+    }
+
+    SECTION("math with underscores inside not escaped") {
+        std::string result = convert("text $a_i + b_j$ text\n");
+        REQUIRE(result.find("$a_i + b_j$") != std::string::npos);
+    }
+
+    SECTION("math with braces inside not escaped") {
+        std::string result = convert("text $\\frac{1}{2}$ text\n");
+        REQUIRE(result.find("$\\frac{1}{2}$") != std::string::npos);
+    }
+}
+
 TEST_CASE("Markdown: CLI --md flag", "[cli][md]") {
     SECTION("--md flag recognized") {
         std::string result = latex_fmt::MdConverter().convert("# Test\n");

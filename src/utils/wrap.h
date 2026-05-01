@@ -12,13 +12,12 @@ inline bool is_wrappable_line(const std::string& line, bool wrap_paragraphs) {
     size_t first = line.find_first_not_of(" \t");
     if (first == std::string::npos) return false;
     char c = line[first];
-    if (c == '%') return true;
     if (c == '\\') return false;
-    if (c == '$') return false;
-    if (!wrap_paragraphs) return false;
-    if (line.find('$') != std::string::npos) return false;
-    if (line.find("\\begin") != std::string::npos) return false;
-    if (line.find("\\end") != std::string::npos) return false;
+    if (wrap_paragraphs) {
+        if (c == '$') return false;
+        if (line.find("\\begin") != std::string::npos) return false;
+        if (line.find("\\end") != std::string::npos) return false;
+    }
     return true;
 }
 
