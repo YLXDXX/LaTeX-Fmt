@@ -21,34 +21,99 @@ namespace latex_fmt {
     class Registry {
     public:
         void registerBuiltin() {
-            // Common commands
-            registerCommand("frac", {2, 0, true});
-            registerCommand("sqrt", {1, 1, true});
-            registerCommand("frac12", {0, 0, false}); // Hack to avoid matching \frac if specifically written
+            // --- Text formatting commands ---
             registerCommand("textbf", {1, 0, true});
             registerCommand("textit", {1, 0, true});
-            registerCommand("emph", {1, 0, true});
-            registerCommand("section", {1, 0, true});
-            registerCommand("subsection", {1, 0, true});
-            registerCommand("label", {1, 0, true});
-            registerCommand("ref", {1, 0, true});
-            registerCommand("cite", {1, 0, true});
-            registerCommand("usepackage", {1, 1, false});
+            registerCommand("emph",   {1, 0, true});
+            registerCommand("texttt", {1, 0, true});
+            registerCommand("textsf", {1, 0, true});
+            registerCommand("textrm", {1, 0, true});
+            registerCommand("textsc", {1, 0, true});
+            registerCommand("textup", {1, 0, true});
+            registerCommand("textnormal", {1, 0, true});
 
-            // Math alignment environments
-            registerEnv("align", {AlignStrategy::AlignmentPair, false, true});
-            registerEnv("align*", {AlignStrategy::AlignmentPair, false, true});
-            registerEnv("equation", {AlignStrategy::None, false, true});
+            // --- Math commands ---
+            registerCommand("frac", {2, 0, true});
+            registerCommand("sqrt", {1, 1, true});
+            registerCommand("frac12", {0, 0, false});
+
+            // --- Document structure ---
+            registerCommand("section",       {1, 0, true});
+            registerCommand("subsection",    {1, 0, true});
+            registerCommand("subsubsection", {1, 0, true});
+            registerCommand("paragraph",     {1, 0, true});
+            registerCommand("subparagraph",  {1, 0, true});
+            registerCommand("title",   {1, 0, true});
+            registerCommand("author",  {1, 0, true});
+            registerCommand("date",    {1, 0, true});
+
+            // --- Cross-references and citations ---
+            registerCommand("label",  {1, 0, true});
+            registerCommand("ref",    {1, 0, true});
+            registerCommand("pageref",{1, 0, true});
+            registerCommand("eqref",  {1, 0, true});
+            registerCommand("cite",   {1, 1, false});
+
+            // --- Package inclusion ---
+            registerCommand("usepackage",    {1, 1, false});
+            registerCommand("documentclass", {1, 1, false});
+
+            // --- No-argument commands ---
+            for (const auto& cmd : {"maketitle", "tableofcontents", "newpage", "clearpage",
+                                    "centering", "raggedright", "raggedleft",
+                                    "noindent", "indent", "newline", "linebreak", "pagebreak",
+                                    "hfill", "vfill", "hrulefill", "dotfill",
+                                    "smallskip", "medskip", "bigskip", "par", "today",
+                                    "appendix", "baselineskip"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+
+            // --- List command ---
+            registerCommand("item", {0, 1, false});
+
+            // --- Graphics ---
+            registerCommand("includegraphics", {1, 1, false});
+
+            // --- Float commands ---
+            registerCommand("caption", {1, 0, true});
+
+            // --- Math alignment environments ---
+            registerEnv("align",     {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("align*",    {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("gather",    {AlignStrategy::None, false, true});
+            registerEnv("gather*",   {AlignStrategy::None, false, true});
+            registerEnv("equation",  {AlignStrategy::None, false, true});
             registerEnv("equation*", {AlignStrategy::None, false, true});
-            registerEnv("pmatrix", {AlignStrategy::Matrix, false, true});
-            registerEnv("bmatrix", {AlignStrategy::Matrix, false, true});
-            registerEnv("vmatrix", {AlignStrategy::Matrix, false, true});
-            registerEnv("cases", {AlignStrategy::Cases, false, true});
+            registerEnv("pmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("bmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("vmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("cases",     {AlignStrategy::Cases, false, true});
 
-            // Verbatim environments
-            registerEnv("verbatim", {AlignStrategy::None, true, false});
+            // --- List environments ---
+            registerEnv("itemize",    {AlignStrategy::None, false, false});
+            registerEnv("enumerate",  {AlignStrategy::None, false, false});
+            registerEnv("description",{AlignStrategy::None, false, false});
+
+            // --- Verbatim environments ---
+            registerEnv("verbatim",   {AlignStrategy::None, true, false});
             registerEnv("lstlisting", {AlignStrategy::None, true, false});
-            registerEnv("minted", {AlignStrategy::None, true, false});
+            registerEnv("minted",     {AlignStrategy::None, true, false});
+
+            // --- Table environments ---
+            registerEnv("tabular",  {AlignStrategy::None, false, false});
+            registerEnv("tabularx", {AlignStrategy::None, false, false});
+
+            // --- Other common environments ---
+            registerEnv("figure",       {AlignStrategy::None, false, false});
+            registerEnv("figure*",      {AlignStrategy::None, false, false});
+            registerEnv("table",        {AlignStrategy::None, false, false});
+            registerEnv("table*",       {AlignStrategy::None, false, false});
+            registerEnv("center",       {AlignStrategy::None, false, false});
+            registerEnv("flushleft",    {AlignStrategy::None, false, false});
+            registerEnv("flushright",   {AlignStrategy::None, false, false});
+            registerEnv("quote",        {AlignStrategy::None, false, false});
+            registerEnv("quotation",    {AlignStrategy::None, false, false});
+            registerEnv("tikzpicture",  {AlignStrategy::None, false, false});
         }
 
         void registerCommand(const std::string& name, CommandSignature sig) {

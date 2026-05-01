@@ -208,12 +208,17 @@ namespace latex_fmt {
                     if (t->content.size() == 1 && t->content != "{" && t->content != "[" &&
                         i >= (size_t)sig->optional_args && sig->mandatory_braces) {
                         writeText("{" + t->content + "}");
+                        endOutput(CharCategory::ASCII);
                     } else {
                         writeText(t->content);
+                        endOutput(CharCategory::ASCII);
                     }
                 } else {
                     visitNode(*arg);
                 }
+            }
+            if (n.args.empty()) {
+                endOutput(CharCategory::ASCII);
             }
         }
 
