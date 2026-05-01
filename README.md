@@ -9,37 +9,40 @@
 
 ## 功能特性
 
+程序中所有格式化规则**默认全部启用**。带 `*` 标记的规则可通过命令行参数关闭（详见下方[可选特性](#可选特性)）。
+
 | 规则 | 说明 |
 |------|------|
-| 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
-| 花括号补全 | `\frac12` → `\frac{1}{2}`（仅限已知命令） |
+| 数学定界符统一 `*` | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
+| 花括号补全 `*` | `\frac12` → `\frac{1}{2}`（仅限已知命令） |
 | 去冗余空白 | 文本模式多个空格压缩为 1 个；数学模式保留空格 |
-| 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
+| 缩进与换行 `*` | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
 | 公式对齐 | `align`、`matrix`、`cases` 等环境按 `&` 纵向对齐 |
-| CJK-English 间距 | 中文与英文、数字之间自动添加空格 |
-| 注释规范化 | `%comment` → `% comment`；行末注释前保留 1 个空格 |
-| 行尾空格清除 | 每行末尾空格全部删除 |
-| 空白行处理 | 纯空白行变为空行；连续多空行压缩为 1 个 |
-| 行间公式 | `$$...$$` 自动独立成行并缩进 |
+| CJK-English 间距 `*` | 中文与英文、数字之间自动添加空格 |
+| 注释规范化 `*` | `%comment` → `% comment`；行末注释前保留 1 个空格 |
+| 行尾空格清除 `*` | 每行末尾空格全部删除 |
+| 空白行处理 `*` | 纯空白行变为空行；连续多空行压缩为 1 个 |
+| 行间公式 `*` | `$$...$$` 自动独立成行并缩进 |
 | 错误恢复 | 不匹配的花括号、缺失 `\end` 时不会崩溃，尽力恢复 |
-| 长行警告与自动换行 | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
+| 长行警告与自动换行 `*` | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
 
 ### 可选特性
 
-以下格式化规则可通过命令行参数或配置文件单独关闭/开启：
+以下格式化规则可通过命令行参数或配置文件单独控制。**程序默认全部开启**。
 
-| 参数 | 说明 |
-|------|------|
-| `--indent-width=N` | 设置缩进宽度（默认 2） |
-| `--no-cjk-spacing` / `--cjk-spacing` | 关闭/开启 CJK-ASCII 自动空格 |
-| `--no-brace-completion` / `--brace-completion` | 关闭/开启花括号补全 |
-| `--no-comment-normalize` / `--comment-normalize` | 关闭/开启注释规范化 |
-| `--no-blank-line-compress` / `--blank-line-compress` | 关闭/开启空白行压缩 |
-| `--keep-trailing-spaces` / `--remove-trailing-spaces` | 保留/删除行尾空格 |
-| `--no-display-math-format` / `--display-math-format` | 关闭/开启行间公式独立格式化 |
-| `--no-math-unify` / `--math-unify` | 关闭/开启数学定界符统一 |
-| `--wrap` | 在单词边界自动折行（需配合 `--max-line-width=N`） |
-| `--wrap-paragraphs` | 对纯文本段落自动折行 |
+| 参数（关闭 / 开启） | 默认 | 说明 |
+|------|:---:|------|
+| `--indent-width=N` | `2` | 设置缩进宽度（空格数） |
+| `--no-cjk-spacing` / `--cjk-spacing` | 开启 | CJK 与 ASCII 字符间自动插入空格 |
+| `--no-brace-completion` / `--brace-completion` | 开启 | 单字符参数自动补全花括号（如 `\frac12` → `\frac{1}{2}`） |
+| `--no-comment-normalize` / `--comment-normalize` | 开启 | `%comment` → `% comment`（百分号后自动加空格） |
+| `--no-blank-line-compress` / `--blank-line-compress` | 开启 | 连续多个空行压缩为 1 个空行 |
+| `--keep-trailing-spaces` / `--remove-trailing-spaces` | 删除 | 每行末尾空格是否保留 |
+| `--no-display-math-format` / `--display-math-format` | 开启 | `$$...$$` 自动独立成行并缩进 |
+| `--no-math-unify` / `--math-unify` | 开启 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
+| `--wrap` | 关闭 | 长行在单词边界自动折行（需配合 `--max-line-width=N`） |
+| `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行（需配合 `--max-line-width=N`） |
+| `--max-line-width=N` | `0`（关闭） | 当 `N > 0` 时，超出宽度的行触发警告；配合 `--wrap` 可自动折行 |
 
 ## 快速开始
 
