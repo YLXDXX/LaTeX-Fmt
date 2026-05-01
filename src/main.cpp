@@ -1,8 +1,6 @@
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <sstream>
-#include <cstring>
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
@@ -12,6 +10,9 @@
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
+#include "utils/io.h"
+#include "utils/diff.h"
+#include "utils/wrap.h"
 
 static const char* LATEX_FMT_VERSION = "1.0.0";
 
@@ -57,243 +58,6 @@ static void print_help(const char* prog) {
 
 static void print_version() {
     std::cout << "latex-fmt v" << LATEX_FMT_VERSION << "\n";
-}
-
-static bool read_input(const std::string& path, std::string& out) {
-    std::ifstream ifs(path);
-    if (!ifs) {
-        std::cerr << "latex-fmt: error: cannot read file '" << path << "'\n";
-        return false;
-    }
-    std::ostringstream ss;
-    ss << ifs.rdbuf();
-    out = ss.str();
-    return true;
-}
-
-static bool write_output(const std::string& path, const std::string& content) {
-    std::ofstream ofs(path);
-    if (!ofs) {
-        std::cerr << "latex-fmt: error: cannot write file '" << path << "'\n";
-        return false;
-    }
-    ofs << content;
-    return true;
-}
-
-static std::vector<std::string> split_lines(const std::string& s) {
-    std::vector<std::string> lines;
-    size_t start = 0;
-    for (size_t i = 0; i < s.size(); ++i) {
-        if (s[i] == '\n') {
-            lines.push_back(s.substr(start, i - start));
-            start = i + 1;
-        }
-    }
-    if (start < s.size() || s.empty() || s.back() == '\n') {
-        lines.push_back(s.substr(start));
-    }
-    return lines;
-}
-
-static std::vector<std::vector<int>> compute_lcs_table(
-    const std::vector<std::string>& a, const std::vector<std::string>& b)
-{
-    int n = (int)a.size(), m = (int)b.size();
-    std::vector<std::vector<int>> dp(n + 1, std::vector<int>(m + 1, 0));
-    for (int i = 1; i <= n; ++i) {
-        for (int j = 1; j <= m; ++j) {
-            if (a[i - 1] == b[j - 1]) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-            } else {
-                dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]);
-            }
-        }
-    }
-    return dp;
-}
-
-static std::string generate_unified_diff(
-    const std::string& old_str, const std::string& new_str,
-    const std::string& label_old, const std::string& label_new,
-    int context = 3)
-{
-    auto old_lines = split_lines(old_str);
-    auto new_lines = split_lines(new_str);
-
-    if (old_lines == new_lines) return "";
-
-    int n = (int)old_lines.size(), m = (int)new_lines.size();
-
-    auto dp = compute_lcs_table(old_lines, new_lines);
-
-    std::vector<bool> old_match(n, false), new_match(m, false);
-    {
-        int i = n, j = m;
-        while (i > 0 && j > 0) {
-            if (old_lines[i - 1] == new_lines[j - 1]) {
-                old_match[i - 1] = true;
-                new_match[j - 1] = true;
-                --i; --j;
-            } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-                --i;
-            } else {
-                --j;
-            }
-        }
-    }
-
-    struct Hunk {
-        int old_start, old_count;
-        int new_start, new_count;
-    };
-
-    std::vector<Hunk> hunks;
-    int o = 0, ne = 0;
-    while (o < n || ne < m) {
-        while (o < n && old_match[o]) ++o;
-        while (ne < m && new_match[ne]) ++ne;
-        if (o >= n && ne >= m) break;
-
-        int os = o, ns = ne;
-        while (o < n && !old_match[o]) ++o;
-        while (ne < m && !new_match[ne]) ++ne;
-
-        int oc = o - os, nc = ne - ns;
-        if (oc > 0 || nc > 0) {
-            hunks.push_back({os, oc, ns, nc});
-        }
-    }
-
-    std::ostringstream out;
-    out << "--- " << label_old << "\n"
-        << "+++ " << label_new << "\n";
-
-    for (auto& h : hunks) {
-        int ctx_os = std::max(0, h.old_start - context);
-        int ctx_oe = std::min(n, h.old_start + h.old_count + context);
-        int ctx_ns = std::max(0, h.new_start - context);
-        int ctx_ne = std::min(m, h.new_start + h.new_count + context);
-
-        out << "@@ -" << (ctx_os + 1) << "," << (ctx_oe - ctx_os)
-            << " +" << (ctx_ns + 1) << "," << (ctx_ne - ctx_ns) << " @@\n";
-
-        for (int k = ctx_os; k < h.old_start; ++k) {
-            out << " " << old_lines[k] << "\n";
-        }
-        for (int k = 0; k < h.old_count; ++k) {
-            out << "-" << old_lines[h.old_start + k] << "\n";
-        }
-        for (int k = 0; k < h.new_count; ++k) {
-            out << "+" << new_lines[h.new_start + k] << "\n";
-        }
-        for (int k = h.old_start + h.old_count; k < ctx_oe; ++k) {
-            out << " " << old_lines[k] << "\n";
-        }
-    }
-
-    return out.str();
-}
-
-static bool is_wrappable_line(const std::string& line, bool wrap_paragraphs) {
-    if (line.empty()) return false;
-    size_t first = line.find_first_not_of(" \t");
-    if (first == std::string::npos) return false;
-    char c = line[first];
-    if (c == '%') return true;
-    if (c == '\\') return false;
-    if (c == '$') return false;
-    if (!wrap_paragraphs) return false;
-    if (line.find('$') != std::string::npos) return false;
-    if (line.find("\\begin") != std::string::npos) return false;
-    if (line.find("\\end") != std::string::npos) return false;
-    return true;
-}
-
-static std::string wrap_line(const std::string& line, int max_width, const std::string& cont_indent) {
-    if ((int)line.size() <= max_width) return line;
-
-    std::string result;
-    size_t pos = 0;
-    bool first_part = true;
-
-    while (pos < line.size()) {
-        if (!first_part) result += "\n" + cont_indent;
-
-        size_t avail = max_width;
-        if (!first_part && (int)cont_indent.size() < avail) avail -= cont_indent.size();
-
-        size_t remaining = line.size() - pos;
-        if (remaining <= avail) {
-            result += line.substr(pos);
-            break;
-        }
-
-        size_t search_end = pos + avail;
-        if (search_end > line.size()) search_end = line.size();
-
-        size_t break_at = std::string::npos;
-
-        for (int pass = 0; pass < 3 && break_at == std::string::npos; ++pass) {
-            for (size_t i = search_end; i > pos; --i) {
-                char ch = line[i - 1];
-                bool found = false;
-                if (pass == 0 && (ch == '.' || ch == '?' || ch == '!') && i < line.size()) found = true;
-                if (pass == 1 && (ch == ';' || ch == ':' || ch == ',')) found = true;
-                if (pass == 2 && ch == ' ') found = true;
-                if (found) {
-                    break_at = i;
-                    break;
-                }
-            }
-        }
-
-        if (break_at == std::string::npos || break_at <= pos) {
-            break_at = search_end;
-        }
-
-        result += line.substr(pos, break_at - pos);
-        pos = break_at;
-        while (pos < line.size() && line[pos] == ' ') ++pos;
-        first_part = false;
-    }
-
-    return result;
-}
-
-static std::string apply_wrapping(const std::string& formatted, const latex_fmt::FormatConfig& config) {
-    if (!config.wrap && !config.wrap_paragraphs) return formatted;
-    if (config.max_line_width <= 0) return formatted;
-
-    auto lines = split_lines(formatted);
-    std::ostringstream out;
-
-    for (const auto& line : lines) {
-        if (!is_wrappable_line(line, config.wrap_paragraphs)) {
-            out << line << "\n";
-            continue;
-        }
-
-        if ((int)line.size() <= config.max_line_width) {
-            out << line << "\n";
-            continue;
-        }
-
-        size_t first = line.find_first_not_of(" \t");
-        std::string orig_indent;
-        std::string body;
-        if (first == std::string::npos) {
-            out << line << "\n";
-            continue;
-        }
-        orig_indent = line.substr(0, first);
-        body = line.substr(first);
-        std::string cont = orig_indent + "  ";
-
-        out << orig_indent << wrap_line(body, config.max_line_width - (int)orig_indent.size(), cont) << "\n";
-    }
-
-    return out.str();
 }
 
 int main(int argc, char* argv[]) {
@@ -510,7 +274,7 @@ int main(int argc, char* argv[]) {
         int total = 0, changed = 0;
         for (const auto& f : tex_files) {
             std::string input;
-            if (!read_input(f, input)) {
+            if (!latex_fmt::utils::read_input(f, input)) {
                 changed++;
                 continue;
             }
@@ -518,7 +282,7 @@ int main(int argc, char* argv[]) {
 
             auto [result, warnings] = format_string(input);
             if (config.wrap || config.wrap_paragraphs) {
-                result = apply_wrapping(result, config);
+                result = latex_fmt::utils::apply_wrapping(result, config);
             }
             total++;
 
@@ -541,7 +305,7 @@ int main(int argc, char* argv[]) {
                 if (was_changed) {
                     changed++;
                     std::cout << "=== " << f << " ===\n";
-                    std::cout << generate_unified_diff(input, result, "a/" + f, "b/" + f);
+                    std::cout << latex_fmt::utils::generate_unified_diff(input, result, "a/" + f, "b/" + f);
                 }
                 if (!quiet) {
                     for (const auto& w : warnings) {
@@ -559,7 +323,7 @@ int main(int argc, char* argv[]) {
 
             if (in_place) {
                 if (was_changed) {
-                    if (!write_output(f, result)) { changed++; continue; }
+                    if (!latex_fmt::utils::write_output(f, result)) { changed++; continue; }
                     changed++;
                 }
             } else {
@@ -590,7 +354,7 @@ int main(int argc, char* argv[]) {
 
     std::string input;
     if (!input_path.empty()) {
-        if (!read_input(input_path, input)) return 1;
+        if (!latex_fmt::utils::read_input(input_path, input)) return 1;
     } else {
         std::ostringstream ss;
         ss << std::cin.rdbuf();
@@ -602,7 +366,7 @@ int main(int argc, char* argv[]) {
     auto [result, warnings] = format_string(input);
 
     if (config.wrap || config.wrap_paragraphs) {
-        result = apply_wrapping(result, config);
+        result = latex_fmt::utils::apply_wrapping(result, config);
     }
 
     if (check_only) {
@@ -626,7 +390,7 @@ int main(int argc, char* argv[]) {
     if (diff_mode) {
         std::string label_old = input_path.empty() ? "a/<stdin>" : "a/" + input_path;
         std::string label_new = input_path.empty() ? "b/<stdin>" : "b/" + input_path;
-        std::string diff = generate_unified_diff(input, result, label_old, label_new);
+        std::string diff = latex_fmt::utils::generate_unified_diff(input, result, label_old, label_new);
         if (!diff.empty()) {
             std::cout << diff;
         }
@@ -639,9 +403,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (in_place) {
-        if (!write_output(input_path, result)) return 1;
+        if (!latex_fmt::utils::write_output(input_path, result)) return 1;
     } else if (!output_path.empty()) {
-        if (!write_output(output_path, result)) return 1;
+        if (!latex_fmt::utils::write_output(output_path, result)) return 1;
     } else {
         std::cout << result;
     }
