@@ -39,6 +39,9 @@ latex-fmt -i paper.tex
 
 # 输出到指定文件
 latex-fmt -o out.tex paper.tex
+
+# Markdown 转 LaTeX 并格式化
+latex-fmt --md < input.md > output.tex
 ```
 
 ## 功能特性
@@ -119,6 +122,35 @@ latex-fmt -r --check project/
 latex-fmt -r --diff project/
 ```
 
+### Markdown 转换
+
+通过 `--md` 选项，可将 Markdown 文本转换为 LaTeX 代码并自动格式化：
+
+```bash
+# 从 Markdown 文件转换
+latex-fmt --md input.md -o output.tex
+
+# 从标准输入读取 Markdown
+cat README.md | latex-fmt --md > readme.tex
+
+# 配合其他格式化参数使用
+latex-fmt --md --indent-width=4 notes.md
+```
+
+当前支持的 Markdown 语法：
+
+| 语法 | Markdown | LaTeX |
+|------|------|------|
+| 标题 | `# Title` | `\section{Title}` |
+| 加粗 | `**bold**` | `\textbf{bold}` |
+| 斜体 | `*italic*` | `\textit{italic}` |
+| 行内代码 | `` `code` `` | `\texttt{code}` |
+| 代码块 | ` ```...``` ` | `\begin{verbatim}...\end{verbatim}` |
+| 链接 | `[text](url)` | `\href{url}{text}` |
+| 无序列表 | `- item` | `\begin{itemize} \item item \end{itemize}` |
+| 有序列表 | `1. item` | `\begin{enumerate} \item item \end{enumerate}` |
+| 引用 | `> quote` | `\begin{quote}quote\end{quote}` |
+
 ### 其他选项
 
 ```bash
@@ -171,6 +203,8 @@ latex-fmt/
 │   ├── format/            # 格式化引擎
 │   │   ├── visitor.h      # AST Visitor，生成格式化输出
 │   │   └── math_aligner.h # 数学环境对齐算法
+│   ├── md/                # Markdown 转 LaTeX 转换
+│   │   └── md_converter.h # Markdown → LaTeX 转换器
 │   ├── utils/             # CLI 工具函数
 │   │   ├── io.h           # 文件读写
 │   │   ├── diff.h         # unified diff 生成

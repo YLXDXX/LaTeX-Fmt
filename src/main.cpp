@@ -13,6 +13,7 @@
 #include "utils/io.h"
 #include "utils/diff.h"
 #include "utils/wrap.h"
+#include "md/md_converter.h"
 
 static const char* LATEX_FMT_VERSION = "1.0.0";
 
@@ -46,6 +47,7 @@ static void print_help(const char* prog) {
         << "  --no-math-unify          Disable math delimiter unification\n"
         << "  --wrap                   Wrap long lines at word boundaries\n"
         << "  --wrap-paragraphs        Wrap paragraph text lines\n"
+        << "  --md                     Treat input as Markdown, convert to LaTeX and format\n"
         << "  --config-file=<path>     Read config from file (default: .latexfmtrc)\n"
         << "\n"
         << "Examples:\n"
@@ -67,6 +69,7 @@ int main(int argc, char* argv[]) {
     bool diff_mode = false;
     bool quiet = false;
     bool recursive = false;
+    bool md_mode = false;
     std::string output_path;
     std::string input_path;
     std::string config_file_path;
@@ -208,6 +211,10 @@ int main(int argc, char* argv[]) {
             config.wrap_paragraphs = true;
             continue;
         }
+        if (arg == "--md") {
+            md_mode = true;
+            continue;
+        }
         if (arg.size() > 0 && arg[0] == '-') {
             std::cerr << "latex-fmt: error: unknown option '" << arg << "'\n";
             print_help(argv[0]);
@@ -242,11 +249,15 @@ int main(int argc, char* argv[]) {
     }
 
     auto format_string = [&](const std::string& src) -> std::pair<std::string, std::vector<std::string>> {
+        std::string source = src;
+        if (md_mode) {
+            source = latex_fmt::MdConverter().convert(src);
+        }
         latex_fmt::Registry reg;
         reg.registerBuiltin();
-        latex_fmt::Lexer lex(src, reg);
-        latex_fmt::Parser par(lex.tokenize(), src, reg);
-        latex_fmt::FormatVisitor vis(reg, src, config);
+        latex_fmt::Lexer lex(source, reg);
+        latex_fmt::Parser par(lex.tokenize(), source, reg);
+        latex_fmt::FormatVisitor vis(reg, source, config);
         vis.visit(*par.parse());
         return {vis.extractOutput(), vis.getWarnings()};
     };

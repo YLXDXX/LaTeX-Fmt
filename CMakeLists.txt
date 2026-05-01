@@ -35,6 +35,7 @@ if(BUILD_TESTS)
             tests/test_lexer.cpp
             tests/test_formatter.cpp
             tests/test_cli.cpp
+            tests/test_md.cpp
         )
 
         target_compile_definitions(latex-fmt-tests PRIVATE
