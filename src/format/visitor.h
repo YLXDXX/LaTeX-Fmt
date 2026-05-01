@@ -93,13 +93,13 @@ namespace latex_fmt {
                         ensureNewline();
                         output_ << content;
                         at_line_start_ = false;
-                        last_char_cat_ = CharCategory::Other;
+                        endOutput(CharCategory::Other);
                         ensureNewline();
                     }
                 }
                 output_ << "\\end{" << n.name << "}";
                 at_line_start_ = false;
-                last_char_cat_ = CharCategory::Other;
+                endOutput(CharCategory::Other);
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace latex_fmt {
                     output_ << "\n";
                 }
                 at_line_start_ = true;
-                last_char_cat_ = CharCategory::Other;
+                endOutput(CharCategory::Other);
             } else {
                 for (const auto& child : n.children) {
                     visitNode(*child);
@@ -194,8 +194,7 @@ namespace latex_fmt {
             if (n.is_malformed) {
                 flushPendingSpace();
                 writeText(extractSource(n.source));
-                last_char_cat_ = CharCategory::Other;
-                output_ends_space_ = false;
+                endOutput(CharCategory::Other);
                 return;
             }
 
@@ -203,8 +202,7 @@ namespace latex_fmt {
             if (!sig) {
                 flushPendingSpace();
                 writeText(extractSource(n.source));
-                last_char_cat_ = CharCategory::Other;
-                output_ends_space_ = false;
+                endOutput(CharCategory::Other);
                 return;
             }
 
@@ -219,8 +217,7 @@ namespace latex_fmt {
                         visitNode(*child);
                     }
                     output_ << g->delim_close;
-                    last_char_cat_ = CharCategory::ASCII;
-                    output_ends_space_ = false;
+                    endOutput(CharCategory::ASCII);
                 } else if (auto* t = dynamic_cast<const Text*>(arg.get())) {
                     if (t->content.size() == 1 && t->content != "{" && t->content != "[" &&
                         i >= (size_t)sig->optional_args && sig->mandatory_braces) {
@@ -242,16 +239,14 @@ namespace latex_fmt {
             }
 
             output_ << n.delim_open;
-            last_char_cat_ = CharCategory::ASCII;
-            output_ends_space_ = false;
+            endOutput(CharCategory::ASCII);
 
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
 
             output_ << n.delim_close;
-            last_char_cat_ = CharCategory::ASCII;
-            output_ends_space_ = false;
+            endOutput(CharCategory::ASCII);
         }
 
         void visit(const Text& n) {
@@ -320,8 +315,7 @@ namespace latex_fmt {
                 } else {
                     output_ << content;
                 }
-                last_char_cat_ = CharCategory::Other;
-                output_ends_space_ = false;
+                endOutput(CharCategory::Other);
             }
         }
 
@@ -358,7 +352,7 @@ namespace latex_fmt {
                 if (!out.empty()) output_ << ' ';
                 output_ << text;
                 at_line_start_ = false;
-                last_char_cat_ = CharCategory::Other;
+                endOutput(CharCategory::Other);
             } else {
                 ensureNewline();
                 writeText(text);
@@ -370,7 +364,7 @@ namespace latex_fmt {
             ensureNewline();
             output_ << "\n";
             at_line_start_ = true;
-            last_char_cat_ = CharCategory::Other;
+            endOutput(CharCategory::Other);
         }
 
         void visit(const Newline& n) {
@@ -386,13 +380,12 @@ namespace latex_fmt {
 
             writeText("$");
 
-            last_char_cat_ = CharCategory::ASCII;
+            endOutput(CharCategory::ASCII);
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
             writeText("$");
-            last_char_cat_ = CharCategory::ASCII;
-            output_ends_space_ = false;
+            endOutput(CharCategory::ASCII);
         }
 
         void visit(const DisplayMath& n) {
@@ -414,8 +407,7 @@ namespace latex_fmt {
             at_line_start_ = false;
             ensureNewline();
 
-            last_char_cat_ = CharCategory::ASCII;
-            output_ends_space_ = false;
+            endOutput(CharCategory::ASCII);
         }
 
         void visitNode(const ASTNode& n) {
@@ -454,6 +446,15 @@ namespace latex_fmt {
         CharCategory last_char_cat_ = CharCategory::None;
         bool pending_space_ = false;
         bool output_ends_space_ = false;
+
+        void endOutput(CharCategory cat) {
+            last_char_cat_ = cat;
+            output_ends_space_ = false;
+        }
+
+        void endOutputSpace() {
+            output_ends_space_ = true;
+        }
 
         std::string extractSource(SourceRange range) const {
             return std::string(source_.substr(range.begin_offset, range.end_offset - range.begin_offset));
