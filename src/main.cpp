@@ -7,10 +7,41 @@
 #include "parse/parser.h"
 #include "format/visitor.h"
 
+static const char* LATEX_FMT_VERSION = "1.0.0";
+
+static void print_help(const char* prog) {
+    std::cerr
+        << "latex-fmt — LaTeX code formatter (v" << LATEX_FMT_VERSION << ")\n"
+        << "\n"
+        << "Usage:\n"
+        << "  " << prog << " [options] < input.tex > output.tex\n"
+        << "\n"
+        << "Options:\n"
+        << "  --help, -h          Show this help message and exit\n"
+        << "  --version, -V       Show version and exit\n"
+        << "  --max-line-width=N  Warn when a line exceeds N characters (default: 0 = off)\n"
+        << "\n"
+        << "Examples:\n"
+        << "  " << prog << " < input.tex > output.tex\n"
+        << "  " << prog << " --max-line-width=80 < input.tex > output.tex\n";
+}
+
+static void print_version() {
+    std::cout << "latex-fmt v" << LATEX_FMT_VERSION << "\n";
+}
+
 int main(int argc, char* argv[]) {
     int max_line_width = 0;
     for (int i = 1; i < argc; ++i) {
         std::string_view arg(argv[i]);
+        if (arg == "--help" || arg == "-h") {
+            print_help(argv[0]);
+            return 0;
+        }
+        if (arg == "--version" || arg == "-V") {
+            print_version();
+            return 0;
+        }
         if (arg.compare(0, 17, "--max-line-width=") == 0) {
             max_line_width = std::stoi(std::string(arg.substr(17)));
         }
