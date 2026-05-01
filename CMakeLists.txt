@@ -34,10 +34,12 @@ if(BUILD_TESTS)
             tests/test_registry.cpp
             tests/test_lexer.cpp
             tests/test_formatter.cpp
+            tests/test_cli.cpp
         )
 
         target_compile_definitions(latex-fmt-tests PRIVATE
             SNAPSHOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/snapshots/"
+            LATEX_FMT_BIN="$<TARGET_FILE:latex-fmt>"
         )
 
         target_include_directories(latex-fmt-tests PRIVATE src)
