@@ -76,6 +76,93 @@ namespace latex_fmt {
             // --- Float commands ---
             registerCommand("caption", {1, 0, true});
 
+            // --- caption / subcaption ---
+            registerCommand("captionsetup", {1, 0, false});
+            registerCommand("subcaption",   {1, 0, true});
+            registerEnv("subfigure", {AlignStrategy::None, false, false});
+            registerEnv("subtable",  {AlignStrategy::None, false, false});
+
+            // --- graphicx / svg ---
+            registerCommand("graphicspath",              {1, 0, false});
+            registerCommand("DeclareGraphicsExtensions", {1, 0, false});
+            registerCommand("includesvg", {1, 1, false});
+
+            // --- xcolor ---
+            registerCommand("color",       {1, 1, false});
+            registerCommand("textcolor",   {1, 1, false});
+            registerCommand("colorbox",    {1, 1, false});
+            registerCommand("pagecolor",   {1, 0, false});
+            registerCommand("definecolor", {3, 0, false});
+
+            // --- bm ---
+            registerCommand("bm", {1, 0, true});
+
+            // --- mhchem ---
+            registerCommand("ce", {1, 0, false});
+            registerCommand("pu", {1, 0, false});
+
+            // --- physics / braket (shared commands) ---
+            registerCommand("abs",    {1, 0, true});
+            registerCommand("norm",   {1, 0, true});
+            registerCommand("qty",    {1, 0, true});
+            registerCommand("mqty",   {1, 0, true});
+            registerCommand("eval",   {2, 0, true});
+            registerCommand("comm",   {2, 0, true});
+            registerCommand("order",  {1, 0, true});
+            registerCommand("ket",    {1, 0, true});
+            registerCommand("bra",    {1, 0, true});
+            registerCommand("braket", {2, 0, true});
+            registerCommand("set",    {1, 0, true});
+            registerCommand("dv",     {2, 0, true});
+            registerCommand("pdv",    {2, 0, true});
+            registerCommand("dd",     {0, 0, false});
+
+            // --- braket uppercase variants ---
+            registerCommand("Bra",    {1, 0, true});
+            registerCommand("Ket",    {1, 0, true});
+
+            // -- derivative ---
+            registerCommand("odv",       {2, 0, true});
+            registerCommand("derivative",{2, 0, true});
+
+            // --- extarrows ---
+            registerCommand("xleftrightarrow", {1, 0, false});
+            registerCommand("xlongequal",     {1, 0, false});
+            registerCommand("xLongrightarrow",{1, 0, false});
+
+            // --- gensymb ---
+            for (const auto& cmd : {"degree", "celsius", "micro", "perthousand", "ohm"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+
+            // --- algorithm2e ---
+            for (const auto& cmd : {"KwIn", "KwOut", "KwData", "KwResult",
+                                    "For", "While", "If", "Else", "ElseIf",
+                                    "Return", "SetKw", "SetAlgoLined",
+                                    "LinesNumbered", "BlankLine"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+            registerCommand("SetKwInOut", {2, 0, false});
+            registerCommand("tcp",        {1, 0, false});
+            registerEnv("algorithm",  {AlignStrategy::None, false, false});
+            registerEnv("function",   {AlignStrategy::None, false, false});
+
+            // --- enumitem ---
+            registerCommand("setlist",         {1, 0, false});
+            registerCommand("newlist",         {3, 0, false});
+            registerCommand("setenumerate",    {0, 0, false});
+            registerCommand("setitemize",      {0, 0, false});
+            registerCommand("setdescription",  {0, 0, false});
+
+            // --- lipsum / zhlipsum ---
+            registerCommand("lipsum",   {0, 1, false});
+            registerCommand("zhlipsum", {0, 1, false});
+
+            // --- tabularray ---
+            registerEnv("tblr",     {AlignStrategy::None, false, false});
+            registerEnv("longtblr", {AlignStrategy::None, false, false});
+            registerEnv("talltblr", {AlignStrategy::None, false, false});
+
             // --- Math alignment environments ---
             registerEnv("align",     {AlignStrategy::AlignmentPair, false, true});
             registerEnv("align*",    {AlignStrategy::AlignmentPair, false, true});

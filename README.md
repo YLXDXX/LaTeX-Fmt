@@ -173,6 +173,93 @@ MIT
 `\smallskip` `\medskip` `\bigskip` `\par` `\today` `\appendix`
 `\baselineskip`
 
+#### 宏包命令
+
+以下按宏包分组列出额外支持的命令。签名中 `{n}` 表示 n 个必选参数，`[n]` 表示 n 个可选参数。
+
+##### caption / subcaption
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\captionsetup` | `{1}` | 全局配置图表标题样式 |
+| `\subcaption` | `{1}` | 子图/子表标题（支持花括号补全） |
+
+##### graphicx / svg / xcolor
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\graphicspath` | `{1}` | 设置图片搜索路径 |
+| `\DeclareGraphicsExtensions` | `{1}` | 设置图片扩展名 |
+| `\includesvg` | `[1]{1}` | 插入 SVG 图片 |
+| `\color` | `[1]{1}` | 设置文字颜色 |
+| `\textcolor` | `[1]{1}` | 带颜色的文字 |
+| `\colorbox` | `[1]{1}` | 带底色的盒子 |
+| `\pagecolor` | `{1}` | 设置页面背景色 |
+| `\definecolor` | `{3}` | 定义颜色名 |
+
+##### bm
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\bm` | `{1}` | 数学粗体（支持花括号补全） |
+
+##### mhchem
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\ce` | `{1}` | 化学式/方程式 |
+| `\pu` | `{1}` | 物理单位 |
+
+##### physics / braket / derivative
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\abs` `\norm` `\qty` `\order` | `{1}` | 绝对值 / 范数 / 括号 / 阶 |
+| `\mqty` | `{1}` | 矩阵 |
+| `\eval` `\comm` `\dv` `\pdv` `\odv` `\derivative` | `{2}` | 求值 / 对易子 / 全导数 / 偏导数 / 常导数 |
+| `\ket` `\bra` | `{1}` | 右矢 / 左矢 |
+| `\braket` | `{2}` | 内积 |
+| `\set` | `{1}` | 集合 |
+| `\Bra` `\Ket` | `{1}` | 大尺寸左/右矢 |
+| `\dd` | — | 微分算子 d |
+
+##### extarrows
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\xleftrightarrow` | `{1}` | 可扩展的双向箭头 |
+| `\xlongequal` | `{1}` | 可扩展的等号 |
+| `\xLongrightarrow` | `{1}` | 可扩展的单向箭头 |
+
+##### gensymb
+
+`\degree` `\celsius` `\micro` `\perthousand` `\ohm`（均为无参数命令）
+
+##### algorithm2e
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\KwIn` `\KwOut` `\KwData` `\KwResult` | — | 输入/输出/数据/结果关键字 |
+| `\For` `\While` `\If` `\Else` `\ElseIf` `\Return` | — | 控制流关键字 |
+| `\SetKw` `\SetAlgoLined` `\LinesNumbered` `\BlankLine` | — | 样式配置 / 空行 |
+| `\SetKwInOut` | `{2}` | 自定义输入输出关键字 |
+| `\tcp` | `{1}` | 行末注释 |
+
+##### enumitem
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\setlist` | `{1}` | 全局列表配置 |
+| `\newlist` | `{3}` | 创建新列表环境 |
+| `\setenumerate` `\setitemize` `\setdescription` | — | 列表配置 |
+
+##### lipsum / zhlipsum
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\lipsum` | `[1]` | 生成英文盲文 |
+| `\zhlipsum` | `[1]` | 生成中文盲文 |
+
 ### 环境
 
 #### 数学对齐环境
@@ -209,6 +296,23 @@ MIT
 |------|------|
 | `tabular` | 表格 |
 | `tabularx` | 定宽表格 |
+| `tblr` | tabularray 表格 |
+| `longtblr` | tabularray 长表格 |
+| `talltblr` | tabularray 高表格 |
+
+#### 浮动体子环境
+
+| 环境 | 说明 |
+|------|------|
+| `subfigure` | 子图 |
+| `subtable` | 子表 |
+
+#### 算法环境
+
+| 环境 | 说明 |
+|------|------|
+| `algorithm` | 算法浮动体 |
+| `function` | 函数定义 |
 
 #### 其他环境
 
