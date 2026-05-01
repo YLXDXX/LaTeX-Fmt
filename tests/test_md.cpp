@@ -268,6 +268,19 @@ TEST_CASE("Markdown: LaTeX math passthrough", "[md]") {
         std::string result = convert("text $\\frac{1}{2}$ text\n");
         REQUIRE(result.find("$\\frac{1}{2}$") != std::string::npos);
     }
+
+    SECTION("multi-line display math preserved") {
+        std::string result = convert("text\n$$\na = b + c\nd = e + f\n$$\nmore\n");
+        REQUIRE(result.find("a = b + c") != std::string::npos);
+        REQUIRE(result.find("d = e + f") != std::string::npos);
+    }
+
+    SECTION("display math with cases environment preserved") {
+        std::string result = convert("$$\n\\begin{cases}\na & b \\\\\nc & d\n\\end{cases}\n$$\n");
+        REQUIRE(result.find("\\begin{cases}") != std::string::npos);
+        REQUIRE(result.find("a & b") != std::string::npos);
+        REQUIRE(result.find("\\end{cases}") != std::string::npos);
+    }
 }
 
 TEST_CASE("Markdown: CLI --md flag", "[cli][md]") {

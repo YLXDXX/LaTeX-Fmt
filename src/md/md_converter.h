@@ -25,12 +25,14 @@ private:
     int list_type_ = 0;
     bool in_code_block_ = false;
     std::string code_fence_info_;
+    bool in_display_math_ = false;
 
     // ═══════════════════════════════════════════
     //  Block-level helpers
     // ═══════════════════════════════════════════
     bool isBlankLine(const std::string& line) const;
     bool isCodeFence(const std::string& line) const;
+    bool isDisplayMathFence(const std::string& line) const;
     int detectHeading(const std::string& line, std::string& content) const;
     bool detectListItem(const std::string& line, std::string& marker,
                         std::string& content, int& indent) const;
@@ -156,6 +158,21 @@ inline std::string MdConverter::convert(std::string_view input) {
             continue;
         }
 
+        if (in_display_math_) {
+            out << raw_line << "\n";
+            if (isDisplayMathFence(line)) {
+                in_display_math_ = false;
+            }
+            continue;
+        }
+
+        if (isDisplayMathFence(line)) {
+            flushBlock();
+            in_display_math_ = true;
+            out << raw_line << "\n";
+            continue;
+        }
+
         if (isCodeFence(line)) {
             flushBlock();
             in_code_block_ = true;
@@ -230,6 +247,13 @@ inline bool MdConverter::isBlankLine(const std::string& line) const {
 
 inline bool MdConverter::isCodeFence(const std::string& line) const {
     if (line.size() >= 3 && line[0] == '`' && line[1] == '`' && line[2] == '`')
+        return true;
+    return false;
+}
+
+inline bool MdConverter::isDisplayMathFence(const std::string& line) const {
+    std::string trimmed = ltrim(line);
+    if (trimmed.size() >= 2 && trimmed[0] == '$' && trimmed[1] == '$')
         return true;
     return false;
 }
