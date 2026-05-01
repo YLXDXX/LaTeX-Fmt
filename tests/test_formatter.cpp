@@ -55,6 +55,7 @@ namespace latex_fmt {
         SECTION("Inline math")                 { run_snapshot("inline_math"); }
         SECTION("Display math")                { run_snapshot("display_math"); }
         SECTION("Math alignment")              { run_snapshot("math_align"); }
+        SECTION("Math misc")                   { run_snapshot("math_misc"); }
         SECTION("Commands")                    { run_snapshot("commands"); }
         SECTION("Comments")                    { run_snapshot("comments"); }
         SECTION("Environments")                { run_snapshot("environments"); }
@@ -89,6 +90,7 @@ namespace latex_fmt {
         SECTION("Inline math")     { run_idempotent("inline_math"); }
         SECTION("Display math")    { run_idempotent("display_math"); }
         SECTION("Math alignment")  { run_idempotent("math_align"); }
+        SECTION("Math misc")       { run_idempotent("math_misc"); }
         SECTION("Commands")        { run_idempotent("commands"); }
         SECTION("Comments")        { run_idempotent("comments"); }
         SECTION("Environments")    { run_idempotent("environments"); }
@@ -123,6 +125,7 @@ namespace latex_fmt {
         SECTION("Inline math")     { check_expected_stable("inline_math"); }
         SECTION("Display math")    { check_expected_stable("display_math"); }
         SECTION("Math alignment")  { check_expected_stable("math_align"); }
+        SECTION("Math misc")       { check_expected_stable("math_misc"); }
         SECTION("Commands")        { check_expected_stable("commands"); }
         SECTION("Comments")        { check_expected_stable("comments"); }
         SECTION("Environments")    { check_expected_stable("environments"); }

@@ -58,6 +58,11 @@ namespace latex_fmt {
                     node->context = ctx;
                     return node;
                 }
+                case TokenType::OpenBracket: {
+                    auto node = parseGroup(TokenType::OpenBracket, TokenType::CloseBracket);
+                    node->context = ctx;
+                    return node;
+                }
                 case TokenType::CloseBrace: {
                     SourceRange range = tok.source;
                     advance();

@@ -35,6 +35,31 @@ namespace latex_fmt {
             // --- Math commands ---
             registerCommand("frac", {2, 0, true});
             registerCommand("sqrt", {1, 1, true});
+            registerCommand("stackrel",    {2, 0, false});
+            registerCommand("overset",     {2, 0, false});
+            registerCommand("underset",    {2, 0, false});
+            registerCommand("substack",    {1, 0, false});
+            registerCommand("binom",       {2, 0, true});
+            registerCommand("dprod",       {2, 0, false});
+            registerCommand("text",        {1, 0, false});
+            registerCommand("operatorname",{1, 0, false});
+            registerCommand("tag",         {1, 0, false});
+            registerCommand("tag*",        {1, 0, false});
+            for (const auto& cmd : {"notag", "nonumber", "limits", "nolimits",
+                                    "displaylimits", "displaystyle", "textstyle",
+                                    "scriptstyle", "scriptscriptstyle",
+                                    "smash", "mathclap", "mathrlap", "mathllap"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+
+            // --- Declare / new commands ---
+            registerCommand("DeclareMathOperator", {2, 0, false});
+            registerCommand("newcommand",      {0, 0, false});
+            registerCommand("renewcommand",    {0, 0, false});
+            registerCommand("providecommand",  {0, 0, false});
+            registerCommand("newenvironment",  {0, 0, false});
+            registerCommand("renewenvironment",{0, 0, false});
+            registerCommand("ensuremath",      {1, 0, true});
 
             // --- Document structure ---
             registerCommand("section",       {1, 0, true});
@@ -166,14 +191,27 @@ namespace latex_fmt {
             // --- Math alignment environments ---
             registerEnv("align",     {AlignStrategy::AlignmentPair, false, true});
             registerEnv("align*",    {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("aligned",   {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("alignedat", {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("flalign",   {AlignStrategy::AlignmentPair, false, true});
+            registerEnv("flalign*",  {AlignStrategy::AlignmentPair, false, true});
             registerEnv("gather",    {AlignStrategy::None, false, true});
             registerEnv("gather*",   {AlignStrategy::None, false, true});
+            registerEnv("gathered",  {AlignStrategy::None, false, true});
+            registerEnv("split",     {AlignStrategy::AlignmentPair, false, true});
             registerEnv("equation",  {AlignStrategy::None, false, true});
             registerEnv("equation*", {AlignStrategy::None, false, true});
+            registerEnv("multline",  {AlignStrategy::None, false, true});
+            registerEnv("multline*", {AlignStrategy::None, false, true});
             registerEnv("pmatrix",   {AlignStrategy::Matrix, false, true});
             registerEnv("bmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("Bmatrix",   {AlignStrategy::Matrix, false, true});
             registerEnv("vmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("Vmatrix",   {AlignStrategy::Matrix, false, true});
+            registerEnv("matrix",    {AlignStrategy::Matrix, false, true});
+            registerEnv("smallmatrix",{AlignStrategy::Matrix, false, true});
             registerEnv("cases",     {AlignStrategy::Cases, false, true});
+            registerEnv("dcases",    {AlignStrategy::Cases, false, true});
 
             // --- List environments ---
             registerEnv("itemize",    {AlignStrategy::None, false, false});

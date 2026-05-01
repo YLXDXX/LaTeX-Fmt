@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+
+% 识别引擎单行输出：aligned 环境
+$$
+  \begin{aligned}
+    x & = a + b \\
+    y & = c + d
+  \end{aligned}
+$$
+
+% 识别引擎单行输出：pmatrix 环境
+$$
+  \begin{pmatrix}
+    a & b \\
+    c & d
+  \end{pmatrix}
+$$
+
+% 识别引擎单行输出：cases 环境
+$$
+  \begin{cases}
+    x  & \text{if } x > 0 \\
+    -x & \text{otherwise}
+  \end{cases}
+$$
+
+% 识别引擎单行输出：gathered 环境
+\begin{equation}
+  \begin{gathered}
+    x = a + b \\ y = c + d
+  \end{gathered}
+\end{equation}
+
+% 识别引擎单行输出：split 环境
+\begin{equation}
+  \begin{split}
+    A & = B + C \\
+      & = D + E
+  \end{split}
+\end{equation}
+
+% multline 环境
+\begin{multline}
+  a + b + c + d + e \\
+  + f + g + h + i + j
+\end{multline}
+
+% notag / nonumber / tag
+\begin{align}
+  x & = a \notag \\
+  y & = b \nonumber \\
+  z & = c \tag{1}
+\end{align}
+
+% \text in math, \limits, \nolimits
+$$
+  \sum_{i=1}^{n} \text{for all } i
+$$
+$$
+  \sum\nolimits_{i=1}^{n} \qquad \int\limits_{0}^{1}
+$$
+
+% \stackrel, \overset, \underset, \substack
+$$
+  a \stackrel{\text{def}}{=} b \qquad A \overset{?}{=} B
+$$
+$$
+  \sum_{\substack{i=1 \\ j=2}} x_{ij}
+$$
+
+% \binom
+$$
+  \binom{n}{k}
+$$
+
+% displaystyle/textstyle
+$$
+  \displaystyle \sum_{i=1}^{n} \textstyle \int
+$$
+
+% DeclareMathOperator
+\DeclareMathOperator{\diag}{diag}
+
+% \newcommand
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+% \ensuremath
+\ensuremath{x}
+
+\end{document}
