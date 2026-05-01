@@ -7,6 +7,7 @@
 #include <filesystem>
 #include "core/registry.h"
 #include "core/config.h"
+#include "core/syntax_check.h"
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
@@ -34,6 +35,7 @@ static void print_help(const char* prog) {
         << "  --check                  Check if file needs formatting (exit 1 if changes needed)\n"
         << "  --diff                   Show unified diff instead of formatted output\n"
         << "  --quiet, -q              Suppress warnings\n"
+        << "  --syntax-check           Check syntax before formatting (exit 1 if errors found)\n"
         << "\n"
         << "Formatting options:\n"
         << "  --indent-width=N         Set indentation width (default: 2)\n"
@@ -70,6 +72,7 @@ int main(int argc, char* argv[]) {
     bool quiet = false;
     bool recursive = false;
     bool md_mode = false;
+    bool syntax_check = false;
     std::string output_path;
     std::string input_path;
     std::string config_file_path;
@@ -215,6 +218,10 @@ int main(int argc, char* argv[]) {
             md_mode = true;
             continue;
         }
+        if (arg == "--syntax-check") {
+            syntax_check = true;
+            continue;
+        }
         if (arg.size() > 0 && arg[0] == '-') {
             std::cerr << "latex-fmt: error: unknown option '" << arg << "'\n";
             print_help(argv[0]);
@@ -248,7 +255,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto format_string = [&](const std::string& src) -> std::pair<std::string, std::vector<std::string>> {
+    auto format_string = [&](const std::string& src, bool do_syntax_check = false)
+        -> std::pair<std::string, std::vector<std::string>> {
         std::string source = src;
         if (md_mode) {
             source = latex_fmt::MdConverter().convert(src);
@@ -257,8 +265,22 @@ int main(int argc, char* argv[]) {
         reg.registerBuiltin();
         latex_fmt::Lexer lex(source, reg);
         latex_fmt::Parser par(lex.tokenize(), source, reg);
+        auto doc = par.parse();
+
+        if (do_syntax_check) {
+            latex_fmt::SyntaxChecker checker(source, *doc);
+            auto errors = checker.check();
+            for (const auto& e : errors) {
+                std::cerr << "line " << e.line << ":" << e.col
+                          << ": error: " << e.message << "\n";
+            }
+            if (!errors.empty()) {
+                return {"", {}};
+            }
+        }
+
         latex_fmt::FormatVisitor vis(reg, source, config);
-        vis.visit(*par.parse());
+        vis.visit(*doc);
         return {vis.extractOutput(), vis.getWarnings()};
     };
 
@@ -291,7 +313,13 @@ int main(int argc, char* argv[]) {
             }
             if (input.empty()) { total++; continue; }
 
-            auto [result, warnings] = format_string(input);
+            auto [result, warnings] = format_string(input, syntax_check);
+            if (syntax_check && result.empty() && warnings.empty()) {
+                std::cerr << f << ": syntax errors found\n";
+                changed++;
+                total++;
+                continue;
+            }
             if (config.wrap || config.wrap_paragraphs) {
                 result = latex_fmt::utils::apply_wrapping(result, config);
             }
@@ -374,7 +402,11 @@ int main(int argc, char* argv[]) {
 
     if (input.empty()) return 0;
 
-    auto [result, warnings] = format_string(input);
+    auto [result, warnings] = format_string(input, syntax_check);
+
+    if (syntax_check && result.empty() && warnings.empty()) {
+        return 1;
+    }
 
     if (config.wrap || config.wrap_paragraphs) {
         result = latex_fmt::utils::apply_wrapping(result, config);

@@ -520,3 +520,58 @@ TEST_CASE("CLI: error handling", "[cli]") {
         REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("cannot read"));
     }
 }
+
+TEST_CASE("CLI: --syntax-check option", "[cli][syntax]") {
+    SECTION("valid document passes") {
+        auto f = tmp_path("valid.tex");
+        write_file(f, "\\begin{document}\nHello\n\\end{document}\n");
+        auto r = run_cmd("--syntax-check " + f);
+        REQUIRE(r.exit_code == 0);
+        std::filesystem::remove(f);
+    }
+
+    SECTION("unclosed environment fails") {
+        auto f = tmp_path("unclosed.tex");
+        write_file(f, "\\begin{document}\nHello\n");
+        auto r = run_cmd("--syntax-check " + f);
+        REQUIRE(r.exit_code == 1);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("has no matching"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("unclosed math fails") {
+        auto f = tmp_path("unclosed_math.tex");
+        write_file(f, "$x+y\n");
+        auto r = run_cmd("--syntax-check " + f);
+        REQUIRE(r.exit_code == 1);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("inline math"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("extraneous brace fails") {
+        auto f = tmp_path("extraneous.tex");
+        write_file(f, "}text\n");
+        auto r = run_cmd("--syntax-check " + f);
+        REQUIRE(r.exit_code == 1);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("extraneous"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("without --syntax-check, errors are not reported") {
+        auto f = tmp_path("no_check.tex");
+        write_file(f, "\\begin{document}\n");
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, !Catch::Matchers::ContainsSubstring("has no matching"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("--syntax-check with stderr output") {
+        auto f = tmp_path("stderr_test.tex");
+        write_file(f, "$x+y\n");
+        auto r = run_cmd("--syntax-check " + f);
+        REQUIRE(r.exit_code == 1);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("error:"));
+        std::filesystem::remove(f);
+    }
+}

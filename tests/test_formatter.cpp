@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include "core/registry.h"
+#include "core/syntax_check.h"
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
@@ -954,6 +955,125 @@ namespace latex_fmt {
         SECTION("Mixed CJK and Latin inline math") {
             auto result = format_code("令$x\\in\\mathbb{R}$满足条件");
             REQUIRE_FALSE(result.empty());
+        }
+    }
+
+    std::vector<std::string> check_syntax(const std::string& input) {
+        Registry registry;
+        registry.registerBuiltin();
+        Lexer lexer(input, registry);
+        auto tokens = lexer.tokenize();
+        Parser parser(std::move(tokens), input, registry);
+        auto doc = parser.parse();
+        SyntaxChecker checker(input, *doc);
+        auto errors = checker.check();
+        std::vector<std::string> messages;
+        for (const auto& e : errors) {
+            messages.push_back(e.message);
+        }
+        return messages;
+    }
+
+    TEST_CASE("SyntaxCheck: valid document has no errors", "[syntax]") {
+        SECTION("empty document") {
+            auto errors = check_syntax("");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("document with environment") {
+            auto errors = check_syntax("\\begin{document}\nHello\n\\end{document}");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("document with math") {
+            auto errors = check_syntax("\\begin{document}\n$x+y$\n\\end{document}");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("document with groups") {
+            auto errors = check_syntax("\\begin{document}\n\\textbf{Bold}\n\\end{document}");
+            REQUIRE(errors.empty());
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: unclosed environment", "[syntax]") {
+        SECTION("missing end") {
+            auto errors = check_syntax("\\begin{document}\nHello");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("\\begin{document}") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: unclosed inline math", "[syntax]") {
+        SECTION("unclosed dollar") {
+            auto errors = check_syntax("$x+y");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("inline math") != std::string::npos);
+        }
+
+        SECTION("math inside environment unclosed") {
+            auto errors = check_syntax("\\begin{document}\n$x+y\n\\end{document}");
+            REQUIRE_FALSE(errors.empty());
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: unclosed display math", "[syntax]") {
+        SECTION("unclosed double dollar") {
+            auto errors = check_syntax("$$x+y");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("display math") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: unclosed brace", "[syntax]") {
+        SECTION("unclosed curly brace") {
+            auto errors = check_syntax("\\textbf{Bold");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("'{'") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: unclosed bracket", "[syntax]") {
+        SECTION("unclosed square bracket") {
+            auto errors = check_syntax("\\sqrt[3{2}");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("'['") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: extraneous close delimiters", "[syntax]") {
+        SECTION("stray close brace") {
+            auto errors = check_syntax("}text");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("'}") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: nested environments", "[syntax]") {
+        SECTION("valid nested") {
+            auto errors = check_syntax(
+                "\\begin{document}\n"
+                "\\begin{figure}\n"
+                "content\n"
+                "\\end{figure}\n"
+                "\\end{document}");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("unclosed inner environment") {
+            auto errors = check_syntax(
+                "\\begin{document}\n"
+                "\\begin{figure}\n"
+                "content\n"
+                "\\end{document}");
+            REQUIRE_FALSE(errors.empty());
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: multiple errors reported", "[syntax]") {
+        SECTION("unclosed math and environment") {
+            auto errors = check_syntax("\\begin{document}\n$x+y");
+            REQUIRE(errors.size() >= 2);
         }
     }
 
