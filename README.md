@@ -260,6 +260,31 @@ MIT
 | `\lipsum` | `[1]` | 生成英文盲文 |
 | `\zhlipsum` | `[1]` | 生成中文盲文 |
 
+##### Article / Book 文档类
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\part` / `\part*` | `[1]{1}` / `{1}` | 部 |
+| `\chapter` / `\chapter*` | `[1]{1}` / `{1}` | 章 |
+| `\thanks` | `{1}` | 标题页脚注 |
+| `\frontmatter` `\mainmatter` `\backmatter` | — | Book 前/主/后文 |
+| `\listoffigures` `\listoftables` | — | 图/表目录 |
+| `\pagestyle` `\pagenumbering` | — | 页面风格和编号 |
+
+##### Beamer 文档类
+
+| 命令 | 签名 | 说明 |
+|------|------|------|
+| `\frametitle` | `{1}` | 帧标题 |
+| `\framesubtitle` | `{1}` | 帧副标题 |
+| `\usetheme` `\usecolortheme` `\usefonttheme` `\useinnertheme` `\useoutertheme` | `{1}` | 主题设置 |
+| `\titlegraphic` `\logo` | `{1}` | 标题图 / 徽标 |
+| `\institute` | `{1}` | 单位（支持花括号补全） |
+| `\alert` `\structure` | `{1}` | 高亮 / 结构色文字（支持花括号补全） |
+| `\onslide` | `{1}` | 叠层可见范围 |
+| `\only` `\uncover` `\visible` `\invisible` | `{2}` | 叠层条件显示 |
+| `\pause` `\titlepage` | — | 暂停 / 标题页 |
+
 ### 环境
 
 #### 数学对齐环境
@@ -313,6 +338,25 @@ MIT
 |------|------|
 | `algorithm` | 算法浮动体 |
 | `function` | 函数定义 |
+
+#### Beamer 环境
+
+| 环境 | 说明 |
+|------|------|
+| `frame` | 幻灯片帧 |
+| `columns` | 多列布局 |
+| `column` | 单列 |
+| `block` | 普通块 |
+| `exampleblock` | 示例块 |
+| `alertblock` | 警告块 |
+| `overlayarea` | 叠层区域 |
+| `overprint` | 叠层切换 |
+
+#### Article / Book 环境
+
+| 环境 | 说明 |
+|------|------|
+| `abstract` | 摘要 |
 
 #### 其他环境
 

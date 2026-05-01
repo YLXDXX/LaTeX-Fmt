@@ -200,6 +200,50 @@ namespace latex_fmt {
             registerEnv("quote",        {AlignStrategy::None, false, false});
             registerEnv("quotation",    {AlignStrategy::None, false, false});
             registerEnv("tikzpicture",  {AlignStrategy::None, false, false});
+
+            // --- Article / Book common ---
+            registerCommand("chapter",   {1, 1, true});
+            registerCommand("chapter*",  {1, 0, true});
+            registerCommand("part",      {1, 1, true});
+            registerCommand("part*",     {1, 0, true});
+            registerCommand("thanks",    {1, 0, true});
+            for (const auto& cmd : {"frontmatter", "mainmatter", "backmatter",
+                                    "tableofcontents", "listoffigures", "listoftables",
+                                    "pagestyle", "pagenumbering"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+            registerEnv("abstract", {AlignStrategy::None, false, false});
+
+            // --- Beamer ---
+            registerCommand("frametitle",     {1, 0, true});
+            registerCommand("framesubtitle",  {1, 0, true});
+            registerCommand("usetheme",       {1, 0, false});
+            registerCommand("usecolortheme",  {1, 0, false});
+            registerCommand("usefonttheme",   {1, 0, false});
+            registerCommand("useinnertheme",  {1, 0, false});
+            registerCommand("useoutertheme",  {1, 0, false});
+            registerCommand("titlegraphic",   {1, 0, false});
+            registerCommand("logo",           {1, 0, false});
+            registerCommand("institute",      {1, 0, true});
+            registerCommand("alert",          {1, 0, true});
+            registerCommand("structure",      {1, 0, true});
+            registerCommand("onslide",        {1, 0, false});
+            registerCommand("only",           {2, 0, false});
+            registerCommand("uncover",        {2, 0, false});
+            registerCommand("visible",        {2, 0, false});
+            registerCommand("invisible",      {2, 0, false});
+            for (const auto& cmd : {"pause", "titlepage", "tableofcontents",
+                                    "insertsectionhead", "insertsubsectionhead"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+            registerEnv("frame",         {AlignStrategy::None, false, false});
+            registerEnv("columns",       {AlignStrategy::None, false, false});
+            registerEnv("column",        {AlignStrategy::None, false, false});
+            registerEnv("block",         {AlignStrategy::None, false, false});
+            registerEnv("exampleblock",  {AlignStrategy::None, false, false});
+            registerEnv("alertblock",    {AlignStrategy::None, false, false});
+            registerEnv("overlayarea",   {AlignStrategy::None, false, false});
+            registerEnv("overprint",     {AlignStrategy::None, false, false});
         }
 
         void registerCommand(const std::string& name, CommandSignature sig) {
