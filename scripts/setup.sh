@@ -53,4 +53,4 @@ rm -rf "$EXTERNAL_DIR/Catch2-src" "$TARBALL" "$BUILD_DIR"
 
 echo ""
 echo "==> Catch2 v${CATCH2_VERSION} installed to: $INSTALL_DIR"
-echo "==> Now run:  cd build && cmake .. -DBUILD_TESTS=ON && make -j\$(nproc) && ctest"
+echo "==> Now run:  mkdir -p build && cd build && cmake .. -DBUILD_TESTS=ON && make -j\$(nproc) && ctest"
