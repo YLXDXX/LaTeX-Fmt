@@ -25,6 +25,22 @@ namespace latex_fmt {
         return visitor.extractOutput();
     }
 
+    std::string format_code_config(const std::string& input, const FormatConfig& config) {
+        Registry registry;
+        registry.registerBuiltin();
+
+        Lexer lexer(input, registry);
+        auto tokens = lexer.tokenize();
+
+        Parser parser(std::move(tokens), input, registry);
+        auto ast = parser.parse();
+
+        FormatVisitor visitor(registry, input, config);
+        visitor.visit(*ast);
+
+        return visitor.extractOutput();
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  快照测试：逐字节比对格式化输出与预期文件
     // ═══════════════════════════════════════════════════════════
@@ -720,6 +736,194 @@ namespace latex_fmt {
 
         SECTION("Escaped percent at end") {
             REQUIRE(format_code("text \\%") == "text \\%");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Config=false 路径测试
+    // ═══════════════════════════════════════════════════════════
+
+    TEST_CASE("Config: display_math_format=false", "[formatter][config]") {
+        FormatConfig cfg;
+        cfg.display_math_format = false;
+
+        SECTION("Inline display math preserved") {
+            REQUIRE(format_code_config("$$x+y$$", cfg) == "$$x+y$$");
+        }
+
+        SECTION("Display math with CJK before preserved") {
+            auto result = format_code_config("你好$$x+y$$世界", cfg);
+            REQUIRE(result.find("$$x+y$$") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Config: math_delimiter_unify=false", "[formatter][config]") {
+        FormatConfig cfg;
+        cfg.math_delimiter_unify = false;
+
+        SECTION("Inline LaTeX delimiters preserved") {
+            REQUIRE(format_code_config("\\(x+y\\)", cfg) == "\\(x+y\\)");
+        }
+
+        SECTION("Display LaTeX delimiters preserved in output") {
+            auto result = format_code_config("\\[x+y\\]", cfg);
+            REQUIRE(result.find("\\[") != std::string::npos);
+            REQUIRE(result.find("\\]") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Config: cjk_spacing=false", "[formatter][config]") {
+        FormatConfig cfg;
+        cfg.cjk_spacing = false;
+
+        SECTION("No space inserted") {
+            REQUIRE(format_code_config("你好World", cfg) == "你好World");
+        }
+
+        SECTION("Math still has CJK spacing") {
+            auto result = format_code_config("你好$x$World", cfg);
+            REQUIRE(result.find("你好") != std::string::npos);
+            REQUIRE(result.find("World") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Config: brace_completion=false", "[formatter][config]") {
+        FormatConfig cfg;
+        cfg.brace_completion = false;
+
+        SECTION("Frac shorthand preserved") {
+            REQUIRE(format_code_config("\\frac12", cfg) == "\\frac12");
+        }
+
+        SECTION("Sqrt shorthand preserved") {
+            REQUIRE(format_code_config("\\sqrt2", cfg) == "\\sqrt2");
+        }
+    }
+
+    TEST_CASE("Config: comment_normalize=false", "[formatter][config]") {
+        FormatConfig cfg;
+        cfg.comment_normalize = false;
+
+        SECTION("Raw comment preserved") {
+            REQUIRE(format_code_config("%rawcomment", cfg) == "%rawcomment");
+        }
+
+        SECTION("Empty comment unchanged") {
+            REQUIRE(format_code_config("%", cfg) == "%");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Malformed / error recovery 边界测试
+    // ═══════════════════════════════════════════════════════════
+
+    TEST_CASE("Malformed: deeply nested unmatched braces", "[formatter][malformed]") {
+        SECTION("Three unmatched opens") {
+            auto result = format_code("{{{x}");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Unmatched close at start") {
+            auto result = format_code("}text");
+            REQUIRE_FALSE(result.empty());
+        }
+    }
+
+    TEST_CASE("Malformed: mixed malformed scenarios", "[formatter][malformed]") {
+        SECTION("Command with malformed args") {
+            auto result = format_code("\\frac{1");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Nested begin without end") {
+            auto result = format_code("\\begin{document}\\begin{figure}text");
+            REQUIRE_FALSE(result.empty());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  真实场景 / AI 生成 / 粘贴内容测试
+    // ═══════════════════════════════════════════════════════════
+
+    TEST_CASE("Real-world: AI-generated LaTeX patterns", "[formatter][realworld]") {
+        SECTION("text in math with CJK") {
+            auto result = format_code("$f(x) = \\text{当}x > 0\\text{时}$");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Common ChatGPT LaTeX output") {
+            auto input = "\\documentclass{article}\n\\begin{document}\n"
+                         "The formula is $E = mc^2$ where $c$ is the speed of light.\n"
+                         "\\begin{align}\nf(x) &= x^2 + 2x + 1 \\\\\n&= (x+1)^2\n\\end{align}\n"
+                         "\\end{document}\n";
+            auto result = format_code(input);
+            REQUIRE(result.find("\\frac") == std::string::npos);
+            REQUIRE(result.find("align") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Real-world: pasted web content", "[formatter][realworld]") {
+        SECTION("HTML entities in text") {
+            auto result = format_code("x &gt; 0 and y &lt; 1");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Unicode smart quotes") {
+            auto result = format_code("\"\u201Cquoted text\u201D he said");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Mixed tabs and spaces from paste") {
+            auto result = format_code(" \t  hello  \t\t world\t \n");
+            REQUIRE_FALSE(result.empty());
+        }
+    }
+
+    TEST_CASE("Real-world: common LaTeX constructs", "[formatter][realworld]") {
+        SECTION("Item with optional argument") {
+            REQUIRE(format_code("\\item[Step 1] Do something") == "\\item[Step 1] Do something");
+        }
+
+        SECTION("Figure with position and label") {
+            auto result = format_code(
+                "\\begin{figure}[h]\n"
+                "\\includegraphics{img.png}\n"
+                "\\caption{Test}\n"
+                "\\label{fig:test}\n"
+                "\\end{figure}\n");
+            REQUIRE(result.find("\\begin{figure}[h]") != std::string::npos);
+            REQUIRE(result.find("\\end{figure}") != std::string::npos);
+        }
+
+        SECTION("Deeply nested itemize") {
+            auto result = format_code(
+                "\\begin{itemize}\n"
+                "\\item A\n"
+                "\\begin{itemize}\n"
+                "\\item B\n"
+                "\\begin{itemize}\n"
+                "\\item C\n"
+                "\\end{itemize}\n"
+                "\\end{itemize}\n"
+                "\\end{itemize}\n");
+            REQUIRE(result.find("\\item C") != std::string::npos);
+        }
+
+        SECTION("newcommand definition") {
+            REQUIRE(format_code("\\newcommand{\\foo}[2]{#1 \\to #2}") ==
+                    "\\newcommand{\\foo}[2]{#1 \\to #2}");
+        }
+    }
+
+    TEST_CASE("Real-world: CJK edge cases", "[formatter][realworld]") {
+        SECTION("CJK fullwidth comma at boundary") {
+            auto result = format_code("你好,world");
+            REQUIRE_FALSE(result.empty());
+        }
+
+        SECTION("Mixed CJK and Latin inline math") {
+            auto result = format_code("令$x\\in\\mathbb{R}$满足条件");
+            REQUIRE_FALSE(result.empty());
         }
     }
 

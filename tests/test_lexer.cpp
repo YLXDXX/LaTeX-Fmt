@@ -406,44 +406,114 @@ TEST_CASE("Lexer: complex input", "[lexer]") {
         // Inside: \textit{nested}
         REQUIRE(tokens[2].type == TokenType::Command);
         REQUIRE(tokens[2].value == "textit");
+    }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // math 模式词法测试
+    // ══════════════════════════════════════════════════════════════
+
+    TEST_CASE("Lexer: inline math delimiters", "[lexer][math]") {
+        SECTION("Single dollar inline math") {
+            auto tokens = tokenize("$x + y$");
+            REQUIRE(tokens.size() >= 3);
+            REQUIRE(tokens[0].type == TokenType::InlineMathStart);
+            REQUIRE(tokens[tokens.size() - 1].type == TokenType::InlineMathEnd);
         }
+
+        SECTION("Double dollar is display math") {
+            auto tokens = tokenize("$$E = mc^2$$");
+            REQUIRE(tokens[0].type == TokenType::DisplayMathStart);
+            REQUIRE(tokens[tokens.size() - 1].type == TokenType::DisplayMathEnd);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // 以下测试需要 Lexer 重构后启用（添加 InlineMathStart/End,
-        // DisplayMathStart/End 等 token 类型）
-        // ══════════════════════════════════════════════════════════════
+        SECTION("Multiple inline math on same line") {
+            auto tokens = tokenize("$a$ and $b$");
+            REQUIRE(tokens[0].type == TokenType::InlineMathStart);
+            REQUIRE(tokens[2].type == TokenType::InlineMathEnd);
+            REQUIRE(tokens[6].type == TokenType::InlineMathStart);
+            REQUIRE(tokens[8].type == TokenType::InlineMathEnd);
+        }
 
-        /*
-         T E*ST_CASE("Lexer: inline math delimiters", "[lexer][math]") {
-         SECTION("Single dollar inline math") {
-         auto tokens = tokenize("$x + y$");
-         REQUIRE(tokens[0].type == TokenType::InlineMathStart);
-         REQUIRE(tokens[1].type == TokenType::Text);
-         REQUIRE(tokens[1].value == "x + y");
-         REQUIRE(tokens[2].type == TokenType::InlineMathEnd);
-         }
+        SECTION("Dollar at end of file (unclosed math)") {
+            auto tokens = tokenize("$x");
+            REQUIRE(tokens[0].type == TokenType::InlineMathStart);
+            REQUIRE(tokens[1].type == TokenType::Text);
+        }
 
-         SECTION("Double dollar is display math, not two inline") {
-         auto tokens = tokenize("$$E = mc^2$$");
-         REQUIRE(tokens[0].type == TokenType::DisplayMathStart);
-         REQUIRE(tokens[1].type == TokenType::Text);
-         REQUIRE(tokens[2].type == TokenType::DisplayMathEnd);
-         }
+        SECTION("Double dollar is DisplayMathStart, not two inline") {
+            auto tokens = tokenize("$$");
+            REQUIRE(tokens[0].type == TokenType::DisplayMathStart);
+        }
+    }
 
-         SECTION("Multiple inline math on same line") {
-         auto tokens = tokenize("$a$ and $b$");
-         REQUIRE(tokens[0].type == TokenType::InlineMathStart);
-         REQUIRE(tokens[2].type == TokenType::InlineMathEnd);
-         REQUIRE(tokens[4].type == TokenType::InlineMathStart);
-         REQUIRE(tokens[6].type == TokenType::InlineMathEnd);
-         }
+    TEST_CASE("Lexer: LaTeX math delimiters", "[lexer][math]") {
+        SECTION("\\(...\\) produces inline math tokens") {
+            auto tokens = tokenize("\\(x + y\\)");
+            REQUIRE(tokens[0].type == TokenType::InlineMathStart);
+            REQUIRE(tokens[0].value == "\\(");
+            REQUIRE(tokens[tokens.size() - 1].type == TokenType::InlineMathEnd);
+            REQUIRE(tokens[tokens.size() - 1].value == "\\)");
+        }
 
-         SECTION("Math stops at verbatim") {
-         // $ inside \verb should not start math mode
-         auto tokens = tokenize("\\verb|$|");
-         REQUIRE(tokens[0].type == TokenType::Command);
-         REQUIRE(tokens[1].type == TokenType::VerbContent);
-         }
-         }
-         */
+        SECTION("\\[...\\] produces display math tokens") {
+            auto tokens = tokenize("\\[x + y\\]");
+            REQUIRE(tokens[0].type == TokenType::DisplayMathStart);
+            REQUIRE(tokens[tokens.size() - 1].type == TokenType::DisplayMathEnd);
+        }
+    }
+
+    TEST_CASE("Lexer: verbatim edge cases", "[lexer][verbatim]") {
+        SECTION("Empty verbatim body") {
+            auto tokens = tokenize("\\begin{verbatim}\\end{verbatim}");
+            CHECK(tokens[0].type == TokenType::BeginEnv);
+            CHECK(tokens[1].type == TokenType::VerbatimContent);
+            CHECK(tokens[1].value == "");
+            CHECK(tokens[2].type == TokenType::EndEnv);
+        }
+
+        SECTION("Verb with missing closing delimiter") {
+            auto tokens = tokenize("\\verb|hello");
+            REQUIRE(tokens[0].type == TokenType::Command);
+            REQUIRE(tokens[1].type == TokenType::VerbContent);
+        }
+    }
+
+    TEST_CASE("Lexer: escaped percent edge cases", "[lexer]") {
+        SECTION("Escaped percent before real comment") {
+            auto tokens = tokenize("50\\% done % real comment");
+            bool has_escaped_pct = false;
+            bool has_comment = false;
+            for (auto& t : tokens) {
+                if (t.value == "\\%") has_escaped_pct = true;
+                if (t.type == TokenType::Comment) has_comment = true;
+            }
+            REQUIRE(has_escaped_pct);
+            REQUIRE(has_comment);
+        }
+    }
+
+    TEST_CASE("Lexer: CJK and unicode", "[lexer]") {
+        SECTION("CJK inline math transition") {
+            auto tokens = tokenize("你好$x$世界");
+            REQUIRE(tokens[0].type == TokenType::Text);
+            REQUIRE(tokens[1].type == TokenType::InlineMathStart);
+            bool found_end_text = false;
+            for (auto& t : tokens) {
+                if (t.type == TokenType::Text && t.value.find("世界") != std::string::npos)
+                    found_end_text = true;
+            }
+            REQUIRE(found_end_text);
+        }
+
+        SECTION("Fullwidth punctuation not mistaken for math") {
+            auto tokens = tokenize("\uFFE5 100");
+            REQUIRE_FALSE(tokens.empty());
+        }
+
+        SECTION("Unicode quotes pass through") {
+            auto tokens = tokenize("\"\u201Chello\u201D\"");
+            REQUIRE_FALSE(tokens.empty());
+        }
+    }
+
