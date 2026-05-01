@@ -146,11 +146,11 @@ namespace latex_fmt {
         }
 
         SECTION("Display math delimiter \\[\\] to $$$$") {
-            REQUIRE(format_code("\\[E = mc^2\\]") == "$$\n  E = mc^2\n$$");
+            REQUIRE(format_code("\\[E = mc^2\\]") == "$$\n  E = mc^2\n$$\n");
         }
 
         SECTION("Display math with space") {
-            REQUIRE(format_code("\\[ E = mc^2 \\]") == "$$\n  E = mc^2\n$$");
+            REQUIRE(format_code("\\[ E = mc^2 \\]") == "$$\n  E = mc^2\n$$\n");
         }
     }
 
@@ -416,7 +416,7 @@ namespace latex_fmt {
 
         SECTION("$$ already on own line") {
             REQUIRE(format_code("$$\nE=mc^2\n$$") ==
-            "$$\n  E=mc^2\n$$");
+            "$$\n  E=mc^2\n$$\n");
         }
 
         SECTION("CJK before display math") {
@@ -508,7 +508,7 @@ namespace latex_fmt {
     }
 
     TEST_CASE("Edge: only newlines", "[formatter][edge]") {
-        REQUIRE(format_code("\n\n\n") == "");
+        REQUIRE(format_code("\n\n\n") == "\n");
     }
 
     TEST_CASE("Edge: single character", "[formatter][edge]") {

@@ -439,9 +439,15 @@ namespace latex_fmt {
 
         std::string extractOutput() const {
             std::string out = output_.str();
-            while (!out.empty() && (out.back() == ' ' || out.back() == '\t' || out.back() == '\n')) {
+            while (!out.empty() && (out.back() == ' ' || out.back() == '\t')) {
                 out.pop_back();
             }
+            bool had_nl = false;
+            while (!out.empty() && out.back() == '\n') {
+                out.pop_back();
+                had_nl = true;
+            }
+            if (had_nl) out.push_back('\n');
             return out;
         }
 
