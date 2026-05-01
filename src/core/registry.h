@@ -35,7 +35,6 @@ namespace latex_fmt {
             // --- Math commands ---
             registerCommand("frac", {2, 0, true});
             registerCommand("sqrt", {1, 1, true});
-            registerCommand("frac12", {0, 0, false});
 
             // --- Document structure ---
             registerCommand("section",       {1, 0, true});

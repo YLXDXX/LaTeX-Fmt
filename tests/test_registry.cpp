@@ -82,14 +82,6 @@ TEST_CASE("Registry: built-in commands", "[registry]") {
         REQUIRE(cmd->optional_args == 1);
         REQUIRE(cmd->mandatory_braces == false);
     }
-
-    SECTION("frac12 has 0 args, brace completion off") {
-        auto* cmd = reg.lookupCmd("frac12");
-        REQUIRE(cmd != nullptr);
-        REQUIRE(cmd->mandatory_args == 0);
-        REQUIRE(cmd->optional_args == 0);
-        REQUIRE(cmd->mandatory_braces == false);
-    }
 }
 
 TEST_CASE("Registry: built-in environments", "[registry]") {
