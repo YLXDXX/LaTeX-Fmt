@@ -9,6 +9,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(latex-fmt src/main.cpp)
 target_include_directories(latex-fmt PRIVATE src)
 
+include(GNUInstallDirs)
+install(TARGETS latex-fmt RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 # Testing — optional, requires Catch2
 option(BUILD_TESTS "Build tests (requires Catch2 v3)" OFF)
 
