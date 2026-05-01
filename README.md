@@ -14,7 +14,7 @@
 | 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
 | 花括号补全 | `\frac12` → `\frac{1}{2}`（仅限已知命令） |
 | 去冗余空白 | 文本模式多个空格压缩为 1 个；数学模式保留空格 |
-| 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（每层 2 空格） |
+| 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
 | 公式对齐 | `align`、`matrix`、`cases` 等环境按 `&` 纵向对齐 |
 | CJK-English 间距 | 中文与英文、数字之间自动添加空格 |
 | 注释规范化 | `%comment` → `% comment`；行末注释前保留 1 个空格 |
@@ -22,7 +22,24 @@
 | 空白行处理 | 纯空白行变为空行；连续多空行压缩为 1 个 |
 | 行间公式 | `$$...$$` 自动独立成行并缩进 |
 | 错误恢复 | 不匹配的花括号、缺失 `\end` 时不会崩溃，尽力恢复 |
-| 长行警告 | `--max-line-width=N` 检测超长行，仅警告，不拆行 |
+| 长行警告与自动换行 | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
+
+### 可选特性
+
+以下格式化规则可通过命令行参数或配置文件单独关闭/开启：
+
+| 参数 | 说明 |
+|------|------|
+| `--indent-width=N` | 设置缩进宽度（默认 2） |
+| `--no-cjk-spacing` / `--cjk-spacing` | 关闭/开启 CJK-ASCII 自动空格 |
+| `--no-brace-completion` / `--brace-completion` | 关闭/开启花括号补全 |
+| `--no-comment-normalize` / `--comment-normalize` | 关闭/开启注释规范化 |
+| `--no-blank-line-compress` / `--blank-line-compress` | 关闭/开启空白行压缩 |
+| `--keep-trailing-spaces` / `--remove-trailing-spaces` | 保留/删除行尾空格 |
+| `--no-display-math-format` / `--display-math-format` | 关闭/开启行间公式独立格式化 |
+| `--no-math-unify` / `--math-unify` | 关闭/开启数学定界符统一 |
+| `--wrap` | 在单词边界自动折行（需配合 `--max-line-width=N`） |
+| `--wrap-paragraphs` | 对纯文本段落自动折行 |
 
 ## 快速开始
 
@@ -36,15 +53,116 @@ make -j$(nproc)
 
 生成的可执行文件为 `build/latex-fmt`。
 
+### 安装
+
+```bash
+# 安装到系统目录（默认 /usr/local/bin）
+cmake --install build
+# 指定安装路径
+cmake --install build --prefix /usr/local
+```
+
 ### 使用
 
 ```bash
-# 从标准输入读取，格式化后输出到标准输出
-./latex-fmt < input.tex > output.tex
-
-# 启用长行警告（超过 80 字符时发出警告）
-./latex-fmt --max-line-width=80 < input.tex > output.tex
+# 完整命令行参考
+latex-fmt --help
 ```
+
+#### 基本用法
+
+```bash
+# 从标准输入读取，格式化后输出到标准输出
+latex-fmt < input.tex > output.tex
+
+# 直接格式化文件，输出到标准输出
+latex-fmt paper.tex
+
+# 原地格式化文件
+latex-fmt -i paper.tex
+
+# 格式化后输出到指定文件
+latex-fmt -o out.tex paper.tex
+```
+
+#### 检查与 diff 模式
+
+```bash
+# 检查是否需要格式化（CI 用，如需格式化则退出码为 1）
+latex-fmt --check paper.tex
+
+# 显示统一 diff 格式的差异
+latex-fmt --diff paper.tex
+
+# 递归检查目录下所有 .tex 文件
+latex-fmt -r --check project/
+```
+
+#### 格式化参数
+
+```bash
+# 缩进宽度设为 4
+latex-fmt --indent-width=4 paper.tex
+
+# 关闭 CJK-ASCII 自动空格
+latex-fmt --no-cjk-spacing paper.tex
+
+# 关闭花括号补全
+latex-fmt --no-brace-completion paper.tex
+
+# 长行自动折行（行宽 80）
+latex-fmt --max-line-width=80 --wrap-paragraphs paper.tex
+
+# 组合使用多个参数
+latex-fmt --indent-width=4 --no-cjk-spacing --quiet paper.tex
+```
+
+#### 递归处理
+
+```bash
+# 递归格式化目录
+latex-fmt -r -i project/
+
+# 递归检查目录
+latex-fmt -r --check project/
+
+# 递归显示 diff
+latex-fmt -r --diff project/
+```
+
+#### 其他参数
+
+```bash
+# 抑制警告输出
+latex-fmt --quiet paper.tex
+
+# 使用自定义配置文件
+latex-fmt --config-file=/path/to/.latexfmtrc paper.tex
+```
+
+### 配置文件
+
+latex-fmt 支持 `.latexfmtrc` 配置文件，按以下优先级查找（后找到的覆盖先找到的）：
+
+1. `~/.latexfmtrc`（全局配置）
+2. `./.latexfmtrc`（当前目录配置）
+3. 通过 `--config-file=<path>` 指定的文件
+
+配置文件格式为 `key = value`，每行一对。`#` 开头的行为注释。
+
+```ini
+# .latexfmtrc 示例
+indent_width = 4
+max_line_width = 80
+cjk_spacing = false
+wrap_paragraphs = true
+
+# 布尔值支持: true, 1, yes, on / false, 0, no, off
+brace_completion = true
+comment_normalize = true
+```
+
+命令行参数始终覆盖配置文件中的设置。
 
 ### 运行测试（可选，需 Catch2）
 
@@ -64,7 +182,8 @@ ctest
 ```text
 latex-fmt/
 ├── src/
-│   ├── core/              # 基础数据结构：AST 节点、源码位置、Unicode 宽度
+│   ├── core/              # 基础数据结构
+│   │   ├── config.h       # FormatConfig 格式化配置
 │   │   ├── registry.h     # 命令/环境签名注册表
 │   │   ├── source_location.h
 │   │   └── unicode_width.h
