@@ -21,8 +21,16 @@ make -j$(nproc)
 ### 安装
 
 ```bash
-cmake --install build                    # 安装到 /usr/local/bin
-cmake --install build --prefix /usr/local # 指定路径
+# 方式一：在项目根目录执行
+cmake --install build                     # 安装到默认位置（/usr/local）
+cmake --install build --prefix /usr/local # 显式指定安装路径
+
+# 方式二：在 build 目录内执行
+cd build && make install                  # 使用 Makefile 安装
+
+# 安装到用户本地目录（无需 root 权限）
+cmake --install build --prefix ~/.local
+make install DESTDIR=~/.local             # 或从 build 目录执行
 ```
 
 ### 基本使用
