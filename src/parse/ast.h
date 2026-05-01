@@ -34,6 +34,7 @@ namespace latex_fmt {
 
     struct Text : ASTNode {
         std::string content;
+        bool is_verbatim = false;
     };
 
     struct CommentNode : ASTNode {

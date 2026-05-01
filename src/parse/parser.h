@@ -293,6 +293,9 @@ namespace latex_fmt {
             auto node = std::make_unique<Text>();
             node->content = peek().value;
             node->source = peek().source;
+            if (peek().type == TokenType::VerbContent) {
+                node->is_verbatim = true;
+            }
             advance();
             return node;
         }

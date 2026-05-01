@@ -114,9 +114,22 @@ namespace latex_fmt {
                 std::vector<std::string> lines;
                 std::ostringstream current_line;
                 for (const auto& child : n.children) {
+                    bool child_verb = false;
+                    if (auto* t = dynamic_cast<const Text*>(child.get())) {
+                        child_verb = t->is_verbatim;
+                    }
                     ScopedBuffer buf(*this);
                     visitNode(*child);
                     std::string part = buf.str();
+
+                    if (child_verb) {
+                        for (size_t i = 0; i + 1 < part.size(); ++i) {
+                            if (part[i] == '\\' && part[i+1] == '\\') {
+                                part[i] = '\x02'; part[i+1] = '\x02'; ++i;
+                            }
+                        }
+                        for (auto& c : part) if (c == '&') c = '\x01';
+                    }
 
                     size_t pos = 0;
                     while (pos < part.size()) {
@@ -149,6 +162,10 @@ namespace latex_fmt {
                 }
 
                 std::string aligned = MathAligner::align(lines);
+                for (auto& c : aligned) {
+                    if (c == '\x01') c = '&';
+                    if (c == '\x02') c = '\\';
+                }
 
                 std::string indent = getIndent();
                 std::istringstream align_stream(aligned);
