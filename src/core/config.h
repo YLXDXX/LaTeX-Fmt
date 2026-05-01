@@ -15,6 +15,8 @@ struct FormatConfig {
     bool trailing_whitespace_remove = true;
     bool display_math_format = true;
     bool math_delimiter_unify = true;
+    bool wrap = false;
+    bool wrap_paragraphs = false;
 
     bool load_from_file(const std::string& path) {
         std::ifstream ifs(path);
@@ -48,6 +50,10 @@ struct FormatConfig {
                 display_math_format = parse_bool(value, true);
             } else if (key == "math_delimiter_unify") {
                 math_delimiter_unify = parse_bool(value, true);
+            } else if (key == "wrap") {
+                wrap = parse_bool(value, false);
+            } else if (key == "wrap_paragraphs") {
+                wrap_paragraphs = parse_bool(value, false);
             }
         }
         return true;
