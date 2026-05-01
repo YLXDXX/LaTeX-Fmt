@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <filesystem>
 #include "core/registry.h"
 #include "core/config.h"
 #include "parse/lexer.h"
@@ -27,6 +28,7 @@ static void print_help(const char* prog) {
         << "  --version, -V            Show version and exit\n"
         << "  -i                       Format file in-place\n"
         << "  -o <file>                Write output to file\n"
+        << "  -r, --recursive          Recursively process all .tex files in directory\n"
         << "  --check                  Check if file needs formatting (exit 1 if changes needed)\n"
         << "  --diff                   Show unified diff instead of formatted output\n"
         << "  --quiet, -q              Suppress warnings\n"
@@ -197,6 +199,7 @@ int main(int argc, char* argv[]) {
     bool check_only = false;
     bool diff_mode = false;
     bool quiet = false;
+    bool recursive = false;
     std::string output_path;
     std::string input_path;
     std::string config_file_path;
@@ -239,6 +242,10 @@ int main(int argc, char* argv[]) {
         }
         if (arg == "-i") {
             in_place = true;
+            continue;
+        }
+        if (arg == "-r" || arg == "--recursive") {
+            recursive = true;
             continue;
         }
         if (arg == "-o") {
@@ -354,6 +361,119 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    if (recursive && !input_path.empty() && !output_path.empty()) {
+        std::cerr << "latex-fmt: error: -r cannot be used with -o (output to directory not supported)\n";
+        return 1;
+    }
+
+    auto format_string = [&](const std::string& src) -> std::pair<std::string, std::vector<std::string>> {
+        latex_fmt::Registry reg;
+        reg.registerBuiltin();
+        latex_fmt::Lexer lex(src, reg);
+        latex_fmt::Parser par(lex.tokenize(), src, reg);
+        latex_fmt::FormatVisitor vis(reg, src, config);
+        vis.visit(*par.parse());
+        return {vis.extractOutput(), vis.getWarnings()};
+    };
+
+    if (recursive) {
+        std::string dir = input_path.empty() ? "." : input_path;
+        if (!std::filesystem::is_directory(dir)) {
+            std::cerr << "latex-fmt: error: '" << dir << "' is not a directory\n";
+            return 1;
+        }
+
+        std::vector<std::string> tex_files;
+        for (auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".tex") {
+                tex_files.push_back(entry.path().string());
+            }
+        }
+        std::sort(tex_files.begin(), tex_files.end());
+
+        if (tex_files.empty()) {
+            std::cerr << "latex-fmt: no .tex files found in '" << dir << "'\n";
+            return 0;
+        }
+
+        int total = 0, changed = 0;
+        for (const auto& f : tex_files) {
+            std::string input;
+            if (!read_input(f, input)) {
+                changed++;
+                continue;
+            }
+            if (input.empty()) { total++; continue; }
+
+            auto [result, warnings] = format_string(input);
+            total++;
+
+            bool was_changed = (input != result);
+
+            if (check_only) {
+                if (!quiet) {
+                    for (const auto& w : warnings) {
+                        std::cerr << f << ": WARNING: " << w << "\n";
+                    }
+                }
+                if (was_changed) {
+                    std::cerr << f << ": needs formatting\n";
+                    changed++;
+                }
+                continue;
+            }
+
+            if (diff_mode) {
+                if (was_changed) {
+                    changed++;
+                    std::cout << "=== " << f << " ===\n";
+                    std::cout << generate_unified_diff(input, result, "a/" + f, "b/" + f);
+                }
+                if (!quiet) {
+                    for (const auto& w : warnings) {
+                        std::cerr << f << ": WARNING: " << w << "\n";
+                    }
+                }
+                continue;
+            }
+
+            if (!quiet) {
+                for (const auto& w : warnings) {
+                    std::cerr << f << ": WARNING: " << w << "\n";
+                }
+            }
+
+            if (in_place) {
+                if (was_changed) {
+                    if (!write_output(f, result)) { changed++; continue; }
+                    changed++;
+                }
+            } else {
+                if (was_changed) changed++;
+                std::cout << "=== " << f << " ===\n" << result;
+            }
+        }
+
+        if (check_only) {
+            if (changed > 0) {
+                std::cerr << "\n" << changed << " of " << total << " file(s) need formatting\n";
+                return 1;
+            }
+            return 0;
+        }
+
+        if (in_place) {
+            if (!quiet) std::cerr << total << " file(s) formatted, " << changed << " file(s) changed\n";
+            return changed > 0 ? 0 : 0;
+        }
+
+        if (diff_mode) {
+            return changed > 0 ? 1 : 0;
+        }
+
+        return 0;
+    }
+
     std::string input;
     if (!input_path.empty()) {
         if (!read_input(input_path, input)) return 1;
@@ -365,24 +485,12 @@ int main(int argc, char* argv[]) {
 
     if (input.empty()) return 0;
 
-    latex_fmt::Registry registry;
-    registry.registerBuiltin();
-
-    latex_fmt::Lexer lexer(input, registry);
-    auto tokens = lexer.tokenize();
-
-    latex_fmt::Parser parser(std::move(tokens), input, registry);
-    auto ast = parser.parse();
-
-    latex_fmt::FormatVisitor visitor(registry, input, config);
-    visitor.visit(*ast);
-
-    std::string result = visitor.extractOutput();
+    auto [result, warnings] = format_string(input);
 
     if (check_only) {
         bool needs_fmt = (input != result);
         if (!quiet) {
-            for (const auto& w : visitor.getWarnings()) {
+            for (const auto& w : warnings) {
                 std::cerr << "WARNING: " << w << "\n";
             }
         }
@@ -405,7 +513,7 @@ int main(int argc, char* argv[]) {
             std::cout << diff;
         }
         if (!quiet) {
-            for (const auto& w : visitor.getWarnings()) {
+            for (const auto& w : warnings) {
                 std::cerr << "WARNING: " << w << "\n";
             }
         }
@@ -421,7 +529,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (!quiet) {
-        for (const auto& w : visitor.getWarnings()) {
+        for (const auto& w : warnings) {
             std::cerr << "WARNING: " << w << "\n";
         }
     }
