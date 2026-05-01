@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+\section{Brace Completion}
+\frac{1}{2} should become \frac{1}{2}.
+$\frac{3}{4}$ also works.
+\frac{5}{6} and $\frac{7}{8}$.
+
+\section{Sqrt}
+\sqrt{x} and \sqrt[3]{x}.
+
+\section{Known Commands}
+\textbf{Bold text} and \textit{italic} and \emph{emphasis}.
+\section{Title}
+\subsection{Subtitle}
+\label{sec:intro}
+\ref{sec:intro}
+\cite{key2024}
+
+\section{Commands Without Arguments}
+\centering
+\bigskip
+\noindent Text after no-arg commands.
+
+\section{Consecutive Commands}
+\textbf{A}\textit{B}\emph{C}
+\section{First}\section{Second}
+\label{sec:first}\label{sec:second}
+
+\section{Optional Arguments}
+\usepackage[utf8]{inputenc}
+\sqrt[3]{8}
+
+\section{Unknown Commands}
+\mycommand{arg1}{arg2}
+\custommacro[opt]{required}
+\unknown
+
+\section{Special Characters}
+\# \$ \% \& \_ \{ \} \textbackslash
+Dashes: - hyphen, -- en-dash, --- em-dash.
+Tildes: ~ and \~{n}.
+
+\section{Escaped Percent}
+$x \% y$ in math mode.
+\end{document}

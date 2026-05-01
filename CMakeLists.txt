@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.16)
+project(latex-fmt LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Main executable
+add_executable(latex-fmt src/main.cpp)
+target_include_directories(latex-fmt PRIVATE src)
+
+# Testing
+option(BUILD_TESTS "Build tests" ON)
+if(BUILD_TESTS)
+    enable_testing()
+
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/install")
+
+    find_package(Catch2 3 CONFIG REQUIRED)
+
+    add_executable(latex-fmt-tests
+        tests/test_main.cpp
+        tests/test_unicode_width.cpp
+        tests/test_registry.cpp
+        tests/test_lexer.cpp
+        tests/test_formatter.cpp
+    )
+
+    target_compile_definitions(latex-fmt-tests PRIVATE SNAPSHOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/snapshots/")
+
+    target_include_directories(latex-fmt-tests PRIVATE src)
+
+    target_link_libraries(latex-fmt-tests PRIVATE Catch2::Catch2WithMain)
+
+    include(Catch)
+
+    catch_discover_tests(latex-fmt-tests)
+endif()

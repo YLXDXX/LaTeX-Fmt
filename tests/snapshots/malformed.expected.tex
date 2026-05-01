@@ -1,0 +1,48 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+\section{Unmatched Close Brace}
+This has an unmatched } brace.
+Normal text continues.
+
+\section{Unmatched Open Brace}
+This has an unmatched { open brace.
+Text after.
+
+\section{Missing End Environment}
+\begin{align}
+x &= 1 \\
+y &= 2
+Text after missing end.
+
+\section{Double Close Brace}}
+Text after double close.
+
+\section{Nested Braces Mismatch}
+\textbf{Bold {with inner} but extra }
+
+\section{Command With Garbage}
+\frac{1
+
+\section{Empty Input Before Command}
+\frac12
+
+\section{Extra Close Brace in Math}
+\begin{equation}
+  x = } + 1
+
+
+\section{Recovery After Error}
+This has an unmatched }brace.
+\frac{1}{2}
+after the error.
+
+\section{Unknown Command Recovery}
+\mycommand{arg1}{arg2}
+\custommacro[opt]{required}
+Normal text after.
+
+\section{Malformed Environment Args}
+\begin{equation
+E = mc^2
+\end{equation}

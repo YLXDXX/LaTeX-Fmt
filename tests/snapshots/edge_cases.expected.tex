@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+\section{Accent Commands}
+LaTeX accents: \"{o}, \'{e}, \`{a}, \^{i}, \~{n}, \c{c}, \H{o}, \u{a}, \v{s}, \t{oo}.
+Also: \oe, \ae, \AA, \l, \L, \O, \o, \ss, \i, \j.
+
+\section{Empty Group}
+An empty group: {} and math mode: ${}$.
+
+\section{Special Group Content}
+Group with just spaces: { }.
+Group with command: {\textbf{inner}}.
+Group with math: {$x + y$}.
+
+\section{Consecutive Brace Completion}
+\frac{1}{2} and \frac{3}{4}in one line.
+$\frac{5}{6}\frac{7}{8}$ consecutively.
+
+\section{Nested Fraction Shorthand}
+\frac{\frac{1}{2}}{\frac{3}{4}}.
+
+\section{Math Space Commands}
+In math: $a\,b\;c\:d\!e$ and $a\quad b$ and $a\qquad b$.
+
+\section{Left-Right Pairs}
+$\left( \frac{1}{2} \right)$.
+$\left[ \sum_{i=1}^{n} \right]$.
+$\left\{ \frac{a}{b} \right\}$.
+
+\section{Verbatim Inside Math}
+% Verbatim inside math would be unusual, but test for robustness
+\begin{align}
+  x \ & = \verb|y| \\
+  y \ & = z
+\end{align}
+
+\section{Empty Math Environments}
+\begin{equation}
+\end{equation}
+
+\begin{align}
+\end{align}
+
+\section{Tilde Tie}
+See Table~\ref{tab:sample} and Figure~\ref{fig:sample}.
+Also: Dr.~Smith and e.g.~this.
+CJK with tilde: 中文~English.
+
+\section{End of File Edge Cases}
+No trailing newline. % comment at EOF
+
+\end{document}

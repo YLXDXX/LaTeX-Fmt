@@ -1,0 +1,36 @@
+\documentclass{article}
+\begin{document}
+\section{Verbatim Environment}
+\begin{verbatim}
+  Do not \format this % comment
+  \frac{1}{2} stays as is
+  {braces} "quotes" 'apostrophes'
+\end{verbatim}
+
+\section{Verb Command}
+Simple: \verb|hello world|
+Bang delimiter: \verb!special chars!
+Plus delimiter: \verb+plus sign+
+Asterisk: \verb*|show spaces|
+
+\section{Verb in Context}
+Text \verb|inline verb| more text.
+Before \verb|code| after.
+
+\section{Listings}
+\begin{lstlisting}[language=Python]
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+\end{lstlisting}
+
+\section{Verbatim Edge Cases}
+\begin{verbatim}
+\begin{fake}
+  This should not be parsed as an environment
+  \frac{1}{2} is just text here
+  % this is not a comment
+  \end{fake}
+\end{verbatim}
+\end{document}

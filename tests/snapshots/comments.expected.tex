@@ -1,0 +1,57 @@
+\documentclass{article}
+\begin{document}
+\section{Line-End Comments}
+Code % comment without space
+Code % comment with extra spaces
+Code % comment with proper space
+More code % line-end comment
+
+\section{Standalone Comments}
+% standalone without space
+% standalone with extra spaces
+% standalone with proper space
+% indented comment
+
+\section{Comments In Math}
+\begin{equation}
+  E = mc^2 % energy formula
+\end{equation}
+
+\begin{align}
+  a & = b + c \\
+  % addition
+  d & = e - f% subtraction
+\end{align}
+
+\section{Multiple Comments}
+% Comment 1
+% Comment 2
+% Comment 3
+Text between comments.
+
+\section{Empty Comments}
+%
+Text after empty comment.
+
+\section{Comment Before Paragraph}
+% Comment before paragraph
+Paragraph text.
+
+% Comment after paragraph
+
+\section{Comment After Backslash}
+\% escaped percent is not a comment
+
+\section{Mixed}
+Code % line-end comment
+% standalone comment
+More code % another line-end
+
+% comment after blank line
+Text after comment.
+
+\section{CJK Comments}
+中文 % 注释
+% 独立注释
+测试 % 注释测试
+\end{document}

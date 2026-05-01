@@ -1,0 +1,96 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+\section{Align Single Column}
+\begin{align}
+  a & = b + c \\
+  d & = e + f \\
+  g & = h + i
+\end{align}
+
+\section{Align Multiple Columns}
+\begin{align}
+  x & = 1 & y & = 2 \\
+  z & = 3 & w & = 4
+\end{align}
+
+\section{Align Star}
+\begin{align*}
+  f(x) & = x^2 + 2x + 1 \\
+       & = (x+1)^2
+\end{align*}
+
+\section{Long Equation}
+\begin{align}
+  P(A|B) & = \frac{P(B|A) P(A)}{P(B)} \\
+         & = \frac{P(B|A) P(A)}{P(B|A) P(A) + P(B|\neg A) P(\neg A)}
+\end{align}
+
+\section{Matrix}
+\begin{equation}
+  \begin{pmatrix}
+    1 & 2 & 3 \\
+    4 & 5 & 6 \\
+    7 & 8 & 9
+  \end{pmatrix}
+\end{equation}
+
+\begin{equation}
+  \begin{bmatrix}
+    a_{11} & a_{12} & a_{13} \\
+    a_{21} & a_{22} & a_{23} \\
+    a_{31} & a_{32} & a_{33}
+  \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+  \det(A) =
+  \begin{vmatrix}
+    a & b \\
+    c & d
+  \end{vmatrix} = ad - bc
+\end{equation}
+
+\section{Cases}
+\begin{equation}
+  f(x) =
+  \begin{cases}
+    x^2  & \text{if } x \geq 0 \\
+    -x^2 & \text{if } x < 0
+  \end{cases}
+\end{equation}
+
+\section{Nested Math}
+\begin{equation}
+  \begin{pmatrix}
+    a & b \\
+    c & d
+  \end{pmatrix}
+  \begin{pmatrix}
+    e \\
+    f
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    ae + bf \\
+    ce + df
+  \end{pmatrix}
+\end{equation}
+
+\section{Math With Comments}
+\begin{equation}
+  E = mc^2 % energy formula
+\end{equation}
+
+\begin{align}
+  a & = b + c \\
+  % addition
+  d & = e - f % subtraction
+\end{align}
+
+\section{CJK Alignment}
+\begin{align}
+  长度 & = 1 & 宽度 & = 2 \\
+  高度 & = 3 & 体积 & = 6
+\end{align}
+\end{document}
