@@ -261,7 +261,6 @@ namespace latex_fmt {
                 if (peek().type == open) {
                     auto inner = parseGroup(open, close);
                     group->children.push_back(std::move(inner));
-                    if (depth > 1) depth--;
                 } else if (peek().type == close) {
                     depth--;
                     if (depth == 0) {

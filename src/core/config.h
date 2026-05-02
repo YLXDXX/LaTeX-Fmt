@@ -33,9 +33,9 @@ struct FormatConfig {
             if (key.empty() || key[0] == '#') continue;
 
             if (key == "indent_width") {
-                indent_width = std::atoi(value.c_str());
+                indent_width = parse_int(value, indent_width);
             } else if (key == "max_line_width") {
-                max_line_width = std::atoi(value.c_str());
+                max_line_width = parse_int(value, max_line_width);
             } else if (key == "cjk_spacing") {
                 cjk_spacing = parse_bool(value, true);
             } else if (key == "brace_completion") {
@@ -65,6 +65,18 @@ private:
         if (start == std::string::npos) return "";
         size_t end = s.find_last_not_of(" \t\r");
         return s.substr(start, end - start + 1);
+    }
+
+    static int parse_int(const std::string& v, int default_val) {
+        if (v.empty()) return default_val;
+        try {
+            size_t pos;
+            int val = std::stoi(v, &pos);
+            if (pos != v.size()) return default_val;
+            return val;
+        } catch (...) {
+            return default_val;
+        }
     }
 
     static bool parse_bool(const std::string& v, bool default_val) {

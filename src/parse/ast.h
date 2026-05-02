@@ -39,7 +39,7 @@ namespace latex_fmt {
 
     struct CommentNode : ASTNode {
         std::string text;
-        bool is_line_end;
+        bool is_line_end = false;
     };
 
     struct ParBreak : ASTNode {};

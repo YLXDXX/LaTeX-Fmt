@@ -40,7 +40,6 @@ namespace latex_fmt {
             registerCommand("underset",    {2, 0, false});
             registerCommand("substack",    {1, 0, false});
             registerCommand("binom",       {2, 0, true});
-            registerCommand("dprod",       {2, 0, false});
             registerCommand("text",        {1, 0, false});
             registerCommand("operatorname",{1, 0, false});
             registerCommand("tag",         {1, 0, false});
@@ -246,7 +245,7 @@ namespace latex_fmt {
             registerCommand("part*",     {1, 0, true});
             registerCommand("thanks",    {1, 0, true});
             for (const auto& cmd : {"frontmatter", "mainmatter", "backmatter",
-                                    "tableofcontents", "listoffigures", "listoftables",
+                                    "listoffigures", "listoftables",
                                     "pagestyle", "pagenumbering"}) {
                 registerCommand(cmd, {0, 0, false});
             }
@@ -270,7 +269,7 @@ namespace latex_fmt {
             registerCommand("uncover",        {2, 0, false});
             registerCommand("visible",        {2, 0, false});
             registerCommand("invisible",      {2, 0, false});
-            for (const auto& cmd : {"pause", "titlepage", "tableofcontents",
+            for (const auto& cmd : {"pause", "titlepage",
                                     "insertsectionhead", "insertsubsectionhead"}) {
                 registerCommand(cmd, {0, 0, false});
             }
