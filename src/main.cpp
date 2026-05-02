@@ -278,6 +278,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    latex_fmt::Registry reg;
+    reg.registerBuiltin();
+
     auto format_string = [&](const std::string& src, bool do_syntax_check = false,
                               bool do_syntax_fix = false)
         -> std::pair<std::string, std::vector<std::string>> {
@@ -285,8 +288,6 @@ int main(int argc, char* argv[]) {
         if (md_mode) {
             source = latex_fmt::MdConverter().convert(src);
         }
-        latex_fmt::Registry reg;
-        reg.registerBuiltin();
         latex_fmt::Lexer lex(source, reg);
         latex_fmt::Parser par(lex.tokenize(), source, reg);
         auto doc = par.parse();
