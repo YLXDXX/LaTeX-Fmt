@@ -59,14 +59,29 @@ namespace latex_fmt {
                     if (child) walk(*child);
                 }
                 if (math->is_malformed) {
-                    fixes_.push_back({math->source.end_offset, "$"});
+                    size_t offset = math->source.end_offset;
+                    size_t pos = math->source.begin_offset;
+                    size_t dd = source_.find("$$", pos);
+                    size_t nl = source_.find('\n', pos);
+                    if (dd != std::string::npos && (nl == std::string::npos || dd < nl)) {
+                        offset = dd;
+                    } else if (nl != std::string::npos) {
+                        offset = nl;
+                    }
+                    fixes_.push_back({offset, "$"});
                 }
             } else if (auto* math = dynamic_cast<const DisplayMath*>(&node)) {
                 for (const auto& child : math->children) {
                     if (child) walk(*child);
                 }
                 if (math->is_malformed) {
-                    fixes_.push_back({math->source.end_offset, "$$"});
+                    size_t offset = math->source.end_offset;
+                    size_t pos = math->source.begin_offset;
+                    size_t nl = source_.find('\n', pos);
+                    if (nl != std::string::npos) {
+                        offset = nl;
+                    }
+                    fixes_.push_back({offset, "$$"});
                 }
             } else if (auto* group = dynamic_cast<const Group*>(&node)) {
                 for (const auto& child : group->children) {

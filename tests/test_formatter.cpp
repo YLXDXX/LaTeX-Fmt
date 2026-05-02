@@ -1402,4 +1402,35 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("SyntaxFix: mixed inline/display math", "[syntax][fix]") {
+        SECTION("inline math closed by display math $$ delimiter") {
+            auto fixed = fix_syntax_errors(
+                "则容易验证 $ 稳定因果 $$\n"
+                "  \\tilde{g}^{ab} = g^{ab} + \\frac{t^a t^b}{1+\\alpha^2}\n"
+                "$$ 其中\n");
+            bool has_closing = (fixed.find("$ 稳定因果 $") != std::string::npos)
+                            || (fixed.find("$ 稳定因果") != std::string::npos);
+            REQUIRE(has_closing);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("unclosed display math at end of document") {
+            auto fixed = fix_syntax_errors(
+                "则容易验证\n"
+                "$\\tilde{g}^{ab} = g^{ab}$\n"
+                "$$\n"
+                "其中\n");
+            REQUIRE(fixed.find("$$") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("$...$$ sequence is handled") {
+            auto fixed = fix_syntax_errors(
+                "$$\n"
+                "  \\tilde{g}^{ab} = g^{ab}\n"
+                "$$\n");
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
 } // namespace latex_fmt

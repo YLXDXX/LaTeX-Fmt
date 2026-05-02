@@ -86,6 +86,9 @@ namespace latex_fmt {
             advance();
 
             while (peek().type != TokenType::InlineMathEnd && peek().type != TokenType::Eof) {
+                if (peek().type == TokenType::DisplayMathStart || peek().type == TokenType::DisplayMathEnd) {
+                    break;
+                }
                 auto child = parseNode(ParseContext::InlineMath);
                 if (child) math->children.push_back(std::move(child));
             }
@@ -93,6 +96,8 @@ namespace latex_fmt {
             if (peek().type == TokenType::InlineMathEnd) {
                 math->source.end_offset = peek().source.end_offset;
                 advance();
+            } else if (peek().type == TokenType::DisplayMathStart || peek().type == TokenType::DisplayMathEnd) {
+                math->source.end_offset = peek().source.begin_offset;
             } else {
                 math->is_malformed = true;
                 math->source.end_offset = peek().source.begin_offset;
@@ -109,6 +114,9 @@ namespace latex_fmt {
             advance();
 
             while (peek().type != TokenType::DisplayMathEnd && peek().type != TokenType::Eof) {
+                if (peek().type == TokenType::InlineMathStart || peek().type == TokenType::InlineMathEnd) {
+                    break;
+                }
                 auto child = parseNode(ParseContext::DisplayMath);
                 if (child) math->children.push_back(std::move(child));
             }
@@ -116,6 +124,8 @@ namespace latex_fmt {
             if (peek().type == TokenType::DisplayMathEnd) {
                 math->source.end_offset = peek().source.end_offset;
                 advance();
+            } else if (peek().type == TokenType::InlineMathStart || peek().type == TokenType::InlineMathEnd) {
+                math->source.end_offset = peek().source.begin_offset;
             } else {
                 math->is_malformed = true;
                 math->source.end_offset = peek().source.begin_offset;
