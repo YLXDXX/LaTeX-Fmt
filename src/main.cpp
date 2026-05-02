@@ -319,7 +319,11 @@ int main(int argc, char* argv[]) {
                 } else {
                     for (const auto& e : errors) {
                         std::cerr << "line " << e.line << ":" << e.col
-                                  << ": error: " << e.message << "\n";
+                                  << ": error: " << e.message;
+                        if (!e.context.empty()) {
+                            std::cerr << "\n  " << e.context;
+                        }
+                        std::cerr << "\n";
                     }
                     return {"", {}};
                 }

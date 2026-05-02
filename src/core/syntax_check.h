@@ -13,6 +13,7 @@ namespace latex_fmt {
             int line;
             int col;
             std::string message;
+            std::string context;
         };
 
         SyntaxChecker(std::string_view source, const Document& ast)
@@ -27,8 +28,8 @@ namespace latex_fmt {
 
             for (const auto& [name, offset] : env_stack_) {
                 auto [line, col] = offsetToLineCol(offset);
-                errors_.push_back({line, col,
-                    "unclosed environment '\\begin{" + name + "}'"});
+                makeError(line, col,
+                    "unclosed environment '\\begin{" + name + "}'");
             }
 
             return errors_;
@@ -48,6 +49,15 @@ namespace latex_fmt {
             }
         }
 
+        static int countChars(std::string_view s) {
+            int n = 0;
+            for (size_t i = 0; i < s.size(); ++i) {
+                uint8_t b = static_cast<uint8_t>(s[i]);
+                if ((b & 0xC0) != 0x80) ++n;
+            }
+            return n;
+        }
+
         std::pair<int, int> offsetToLineCol(size_t offset) const {
             if (offset >= source_.size()) offset = source_.size();
             int line = 1;
@@ -57,10 +67,57 @@ namespace latex_fmt {
                     continue;
                 }
                 line = static_cast<int>(i + 1);
-                col = static_cast<int>(offset - line_starts_[i] + 1);
+                size_t line_start = line_starts_[i];
+                col = countChars(source_.substr(line_start, offset - line_start)) + 1;
                 break;
             }
             return {line, col};
+        }
+
+        std::string contextAt(int line, int col) const {
+            if (line < 1 || (size_t)line > line_starts_.size()) return "";
+            size_t line_start = line_starts_[static_cast<size_t>(line - 1)];
+            size_t line_end = source_.size();
+            if ((size_t)line < line_starts_.size()) {
+                line_end = line_starts_[static_cast<size_t>(line)];
+                if (line_end > 0 && source_[line_end - 1] == '\n') line_end--;
+            }
+            std::string_view line_str = source_.substr(line_start, line_end - line_start);
+
+            size_t byte_offset = 0;
+            int char_idx = 1;
+            while (char_idx < col && byte_offset < line_str.size()) {
+                uint8_t b = static_cast<uint8_t>(line_str[byte_offset]);
+                byte_offset++;
+                if ((b & 0xC0) != 0x80) char_idx++;
+            }
+
+            int ctx_before = 5;
+            size_t ctx_start = byte_offset;
+            int seen = 0;
+            while (seen < ctx_before && ctx_start > 0) {
+                ctx_start--;
+                uint8_t b = static_cast<uint8_t>(line_str[ctx_start]);
+                if ((b & 0xC0) != 0x80) seen++;
+            }
+
+            int ctx_after = 5;
+            size_t ctx_end = byte_offset;
+            seen = 0;
+            while (seen < ctx_after && ctx_end < line_str.size()) {
+                uint8_t b = static_cast<uint8_t>(line_str[ctx_end]);
+                ctx_end++;
+                if ((b & 0xC0) != 0x80) seen++;
+            }
+            while (ctx_end < line_str.size() && (static_cast<uint8_t>(line_str[ctx_end]) & 0xC0) == 0x80) {
+                ctx_end++;
+            }
+
+            return std::string(line_str.substr(ctx_start, ctx_end - ctx_start));
+        }
+
+        void makeError(int line, int col, std::string msg) {
+            errors_.push_back({line, col, std::move(msg), contextAt(line, col)});
         }
 
         void walk(const ASTNode& node) {
@@ -79,14 +136,13 @@ namespace latex_fmt {
                 }
                 if (env->is_malformed) {
                     auto [line, col] = offsetToLineCol(env->source.begin_offset);
-                    errors_.push_back({line, col,
-                        "environment '\\begin{" + env->name + "}' has no matching '\\end{" + env->name + "}'"});
+                    makeError(line, col,
+                        "environment '\\begin{" + env->name + "}' has no matching '\\end{" + env->name + "}'");
                 }
             } else if (auto* math = dynamic_cast<const InlineMath*>(&node)) {
                 if (math->is_malformed) {
                     auto [line, col] = offsetToLineCol(math->source.begin_offset);
-                    errors_.push_back({line, col,
-                        "unclosed inline math delimiter '$'"});
+                    makeError(line, col, "unclosed inline math delimiter '$'");
                 }
                 for (const auto& child : math->children) {
                     if (child) walk(*child);
@@ -94,8 +150,7 @@ namespace latex_fmt {
             } else if (auto* math = dynamic_cast<const DisplayMath*>(&node)) {
                 if (math->is_malformed) {
                     auto [line, col] = offsetToLineCol(math->source.begin_offset);
-                    errors_.push_back({line, col,
-                        "unclosed display math delimiter '$$'"});
+                    makeError(line, col, "unclosed display math delimiter '$$'");
                 }
                 for (const auto& child : math->children) {
                     if (child) walk(*child);
@@ -103,8 +158,7 @@ namespace latex_fmt {
             } else if (auto* group = dynamic_cast<const Group*>(&node)) {
                 if (group->is_malformed) {
                     auto [line, col] = offsetToLineCol(group->source.begin_offset);
-                    errors_.push_back({line, col,
-                        "unclosed '" + group->delim_open + "'"});
+                    makeError(line, col, "unclosed '" + group->delim_open + "'");
                 }
                 for (const auto& child : group->children) {
                     if (child) walk(*child);
@@ -116,8 +170,7 @@ namespace latex_fmt {
             } else if (auto* txt = dynamic_cast<const Text*>(&node)) {
                 if (txt->is_malformed) {
                     auto [line, col] = offsetToLineCol(txt->source.begin_offset);
-                    errors_.push_back({line, col,
-                        "extraneous '" + txt->content + "'"});
+                    makeError(line, col, "extraneous '" + txt->content + "'");
                 }
             }
         }
@@ -125,8 +178,8 @@ namespace latex_fmt {
         void checkEnvironment(const Environment& env) {
             if (!env_stack_.empty() && env_stack_.back().first == env.name) {
                 auto [line, col] = offsetToLineCol(env.source.begin_offset);
-                errors_.push_back({line, col,
-                    "nested duplicate environment '\\begin{" + env.name + "}'"});
+                makeError(line, col,
+                    "nested duplicate environment '\\begin{" + env.name + "}'");
             }
         }
 
