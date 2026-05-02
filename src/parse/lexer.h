@@ -122,11 +122,12 @@ namespace latex_fmt {
             }
 
             if (c == ' ' || c == '\t') {
-                std::string space;
+                size_t space_start = pos_;
                 while (pos_ < input_.size() && (input_[pos_] == ' ' || input_[pos_] == '\t')) {
-                    space += input_[pos_++];
+                    pos_++;
                 }
-                return {TokenType::Text, space, {start, pos_}};
+                std::string space(input_.substr(space_start, pos_ - space_start));
+                return {TokenType::Text, std::move(space), {start, pos_}};
             }
 
             if (c == '%' && (pos_ == 0 || input_[pos_-1] != '\\'
