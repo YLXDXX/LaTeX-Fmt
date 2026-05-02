@@ -123,13 +123,10 @@ namespace latex_fmt {
         }
 
         void checkEnvironment(const Environment& env) {
-            for (const auto& [name, offset] : env_stack_) {
-                if (name == env.name) {
-                    auto [line, col] = offsetToLineCol(env.source.begin_offset);
-                    errors_.push_back({line, col,
-                        "nested duplicate environment '\\begin{" + env.name + "}'"});
-                    break;
-                }
+            if (!env_stack_.empty() && env_stack_.back().first == env.name) {
+                auto [line, col] = offsetToLineCol(env.source.begin_offset);
+                errors_.push_back({line, col,
+                    "nested duplicate environment '\\begin{" + env.name + "}'"});
             }
         }
 
