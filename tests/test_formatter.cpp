@@ -1676,4 +1676,45 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("left-right with brackets formatting", "[formatter][bracket]") {
+        SECTION("left dot right brace") {
+            auto result = format_code("$$\\left. \\frac{1}{2}\\sqrt[3]4 \\right\\}$$");
+            REQUIRE(result.find("\\frac{1}{2}") != std::string::npos);
+            REQUIRE(result.find("\\sqrt[3]{4}") != std::string::npos);
+        }
+
+        SECTION("left bracket right bracket") {
+            auto result = format_code("$$3\\left[ \\frac12\\sqrt[3]4 \\right]$$");
+            REQUIRE(result.find("\\frac{1}{2}") != std::string::npos);
+            REQUIRE(result.find("\\sqrt[3]{4}") != std::string::npos);
+        }
+
+        SECTION("left bracket right dot") {
+            auto result = format_code("$$3\\left[ \\frac12\\sqrt[3]4 \\right.$$");
+            REQUIRE(result.find("\\frac{1}{2}") != std::string::npos);
+            REQUIRE(result.find("\\sqrt[3]{4}") != std::string::npos);
+        }
+
+        SECTION("unknown command with optional bracket preserved") {
+            REQUIRE(format_code("\\custommacro[opt]{required}") == "\\custommacro[opt]{required}");
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: left-right constructs no false errors", "[syntax][bracket]") {
+        SECTION("left bracket right bracket") {
+            auto errors = check_syntax("$$3\\left[ \\frac12\\sqrt[3]4 \\right]$$");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("left bracket right dot") {
+            auto errors = check_syntax("$$3\\left[ \\frac12\\sqrt[3]4 \\right.$$");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("left dot right brace") {
+            auto errors = check_syntax("$$\\left. \\frac{1}{2}\\sqrt[3]4 \\right\\}$$");
+            REQUIRE(errors.empty());
+        }
+    }
+
 } // namespace latex_fmt

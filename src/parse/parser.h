@@ -202,7 +202,11 @@ namespace latex_fmt {
             if (!sig) {
                 while (peek().type == TokenType::OpenBrace || peek().type == TokenType::OpenBracket) {
                     if (peek().type == TokenType::OpenBracket) {
-                        cmd->args.push_back(parseGroup(TokenType::OpenBracket, TokenType::CloseBracket));
+                        auto node = std::make_unique<Text>();
+                        node->content = "[";
+                        node->source = peek().source;
+                        advance();
+                        cmd->args.push_back(std::move(node));
                     } else {
                         cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace));
                     }

@@ -200,8 +200,13 @@ namespace latex_fmt {
             auto* sig = registry_.lookupCmd(n.name);
             if (!sig) {
                 flushPendingSpace();
-                writeText(extractSource(n.source));
-                endOutput(CharCategory::Other);
+                writeText("\\" + n.name);
+                for (const auto& arg : n.args) {
+                    visitNode(*arg);
+                }
+                if (n.args.empty()) {
+                    endOutput(CharCategory::ASCII);
+                }
                 return;
             }
 
