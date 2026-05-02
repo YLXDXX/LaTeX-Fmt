@@ -72,6 +72,7 @@ latex-fmt --md < input.md > output.tex
 | 长行警告与自动换行 | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
 | 语法检查 | `--syntax-check` 检查环境/花括号/数学定界符配对，报告位置 |
 | 语法修复 | `--syntax-fix` 基于语法检查结果自动补全缺失的 `}` `]` `$` `$$` `\end` 等 |
+| 删除公式编号 | `--remove-tags` 删除 `\tag{...}` 和 `\tag*{...}` 命令 |
 
 ### 可配置参数
 
@@ -92,6 +93,7 @@ latex-fmt --md < input.md > output.tex
 | `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行 |
 | `--syntax-check` | 关闭 | 格式化前检查语法错误（环境/括号/数学定界符配对） |
 | `--syntax-fix` | 关闭 | 自动补全缺失的 `}` `]` `$` `\end` 等定界符 |
+| `--remove-tags` | 关闭 | 删除公式中的 `\tag{...}` / `\tag*{...}` 命令 |
 
 ## 使用指南
 
@@ -188,6 +190,17 @@ latex-fmt --syntax-fix paper.tex
 | 环境名缺括号 | `\begin{equation` 缺 `}` | 报错 | 自动识别 |
 
 > **注意**：`--syntax-check` 仅报告错误不修改文件。`--syntax-fix` 会修改源文件内容后再格式化。两者均默认关闭，适用于信任文档能正常编译的场景。
+
+### 删除公式编号
+
+使用 `--remove-tags` 可以删除从其他文档粘贴过来的公式中带有的 `\tag{...}` 编号，避免原文编号与新文档冲突：
+
+```bash
+# 删除所有 \tag{...} 和 \tag*{...} 命令
+latex-fmt --remove-tags paper.tex
+```
+
+支持 `\tag{}` 和 `\tag*{}` 两种形式，适用于行间公式（`$$...$$`）和各数学环境（`equation`、`align` 等）。
 
 ### 其他选项
 
