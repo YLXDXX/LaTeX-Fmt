@@ -4,8 +4,10 @@
 
 namespace latex_fmt {
 
+    constexpr uint32_t UTF8_EOF = 0xFFFFFFFF;
+
     inline uint32_t decode_utf8(std::string_view str, size_t& pos) {
-        if (pos >= str.size()) return 0;
+        if (pos >= str.size()) return UTF8_EOF;
         uint8_t c = static_cast<uint8_t>(str[pos++]);
 
         uint32_t cp = 0;
@@ -15,11 +17,11 @@ namespace latex_fmt {
         else if ((c & 0xE0) == 0xC0) { cp = c & 0x1F; bytes = 1; }
         else if ((c & 0xF0) == 0xE0) { cp = c & 0x0F; bytes = 2; }
         else if ((c & 0xF8) == 0xF0) { cp = c & 0x07; bytes = 3; }
-        else { return '?'; } // Invalid UTF-8
+        else { return '?'; }
 
         for (int i = 0; i < bytes; ++i) {
             if (pos >= str.size() || (static_cast<uint8_t>(str[pos]) & 0xC0) != 0x80) {
-                return '?'; // Malformed
+                return '?';
             }
             cp = (cp << 6) | (static_cast<uint8_t>(str[pos]) & 0x3F);
             pos++;
@@ -55,7 +57,7 @@ namespace latex_fmt {
         size_t pos = 0;
         while (pos < str.size()) {
             uint32_t cp = decode_utf8(str, pos);
-            if (cp == 0) break;
+            if (cp == UTF8_EOF) break;
             width += char_width(cp);
         }
         return width;

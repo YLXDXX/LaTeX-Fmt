@@ -250,7 +250,7 @@ namespace latex_fmt {
                 while (pos < content.size()) {
                     size_t byte_start = pos;
                     uint32_t cp = decode_utf8(content, pos);
-                    if (cp == 0) break;
+                    if (cp == UTF8_EOF) break;
 
                     CharCategory cat = classify_cp(cp);
 

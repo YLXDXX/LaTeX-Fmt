@@ -38,13 +38,13 @@ TEST_CASE("Unicode: decode_utf8", "[unicode]") {
     SECTION("Empty string") {
         size_t pos = 0;
         uint32_t cp = decode_utf8("", pos);
-        REQUIRE(cp == 0);
+        REQUIRE(cp == UTF8_EOF);
     }
 
     SECTION("Past end") {
         size_t pos = 5;
         uint32_t cp = decode_utf8("hello", pos);
-        REQUIRE(cp == 0);
+        REQUIRE(cp == UTF8_EOF);
     }
 
     SECTION("Truncated 2-byte") {

@@ -9,7 +9,7 @@ namespace latex_fmt {
 enum class CharCategory { None, ASCII, CJK, CJKPunct, Space, Other };
 
 inline CharCategory classify_cp(uint32_t cp) {
-    if (cp == 0) return CharCategory::None;
+    if (cp == UTF8_EOF) return CharCategory::None;
     if (cp == ' ' || cp == '\t') return CharCategory::Space;
     if (cp == '~') return CharCategory::Other;
     if (cp < 0x80) {
@@ -35,9 +35,8 @@ inline CharCategory classify_last_char(std::string_view s) {
     size_t pos = 0;
     uint32_t last_cp = 0;
     while (pos < s.size()) {
-        size_t prev = pos;
         uint32_t cp = decode_utf8(s, pos);
-        if (cp == 0) break;
+        if (cp == UTF8_EOF) break;
         if (cp != ' ' && cp != '\t') last_cp = cp;
     }
     return classify_cp(last_cp);
