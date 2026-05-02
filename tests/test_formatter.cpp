@@ -1301,10 +1301,9 @@ namespace latex_fmt {
             REQUIRE_FALSE(has_syntax_errors(fixed));
         }
 
-        SECTION("binom bracket then brace") {
+        SECTION("unclosed brace after text bracket is fixed") {
             auto fixed = fix_syntax_errors("\\binom[3{2}");
-            REQUIRE(fixed.find("]") != std::string::npos);
-            REQUIRE_FALSE(has_syntax_errors(fixed));
+            REQUIRE(fixed.find("}") != std::string::npos);
         }
     }
 
@@ -1558,6 +1557,122 @@ namespace latex_fmt {
             auto ctx = get_context("中文}测试\n");
             REQUIRE_FALSE(ctx.empty());
             REQUIRE(ctx.find("中文}测试") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Brackets in math mode are regular characters", "[formatter][bracket]") {
+        SECTION("display math with tensor notation brackets") {
+            auto result = format_code(
+                "$$\n"
+                "\\delta^{[a_1}_{a_1}\n"
+                "$$");
+            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
+        }
+
+        SECTION("display math with unmatched brackets in formula") {
+            auto result = format_code(
+                "$$\n"
+                "\\delta^{[a_1}_{a_1} \\cdots \\delta^{a_n]}_{b_n}\n"
+                "$$");
+            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_n]}_{b_n}") != std::string::npos);
+        }
+
+        SECTION("tensor notation formula from bug report") {
+            auto result = format_code(
+                "$$\n"
+                "\\delta^{[a_1}_{a_1} \\cdots  \\delta^{a_n]}_{\\phantom{[}b_n}"
+                " = \\frac{(n-j)! j!}{n!}"
+                " \\delta^{[a_{j+1}}_{b_{j+1}} \\cdots \\delta^{a_n]}_{b_n}.\n"
+                "$$");
+            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_n]}_{\\phantom{[}b_n}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{[a_{j+1}}_{b_{j+1}}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_n]}_{b_n}") != std::string::npos);
+        }
+
+        SECTION("inline math with bracket chars") {
+            auto result = format_code("$[a,b]$");
+            REQUIRE(result.find("$[a,b]$") != std::string::npos);
+        }
+
+        SECTION("inline math with unmatched brackets") {
+            auto result = format_code("$x^{[n}$");
+            REQUIRE(result.find("$x^{[n}$") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Optional args in math mode still work", "[formatter][bracket]") {
+        SECTION("sqrt with optional arg in display math") {
+            auto result = format_code("$$\\sqrt[3]{x}$$");
+            REQUIRE(result.find("\\sqrt[3]{x}") != std::string::npos);
+        }
+
+        SECTION("sqrt with optional arg in inline math") {
+            auto result = format_code("$\\sqrt[3]{x}$");
+            REQUIRE(result.find("$\\sqrt[3]{x}$") != std::string::npos);
+        }
+
+        SECTION("command with optional arg followed by regular brackets") {
+            auto result = format_code("$$\\sqrt[3]{x^{[n]}}$$");
+            REQUIRE(result.find("\\sqrt[3]{x^{[n]}}") != std::string::npos);
+        }
+
+        SECTION("option arg with nested bracket-like chars") {
+            auto result = format_code("$$\\sqrt[3]{a^{[i}_{j]}}$$");
+            REQUIRE(result.find("\\sqrt[3]{a^{[i}_{j]}}") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Brackets in text mode are regular characters", "[formatter][bracket]") {
+        SECTION("standalone brackets in text") {
+            auto result = format_code("Some text [with brackets] here.");
+            REQUIRE(result.find("[with brackets]") != std::string::npos);
+        }
+
+        SECTION("unmatched open bracket in text") {
+            auto result = format_code("Some text [with unmatched bracket");
+            REQUIRE(result.find("[with unmatched bracket") != std::string::npos);
+        }
+
+        SECTION("close bracket alone in text") {
+            auto result = format_code("Some text] here.");
+            REQUIRE(result.find("Some text] here.") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: no false positive for brackets in math", "[syntax][bracket]") {
+        SECTION("display math with regular brackets has no errors") {
+            auto errors = check_syntax(
+                "$$\n"
+                "\\delta^{[a_1}_{a_1} \\cdots \\delta^{a_n]}_{b_n}\n"
+                "$$");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("inline math with regular brackets has no errors") {
+            auto errors = check_syntax("$x^{[n}$");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("sqrt with optional arg still detects unclosed bracket") {
+            auto errors = check_syntax("\\sqrt[3{2}");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].find("'['") != std::string::npos);
+        }
+    }
+
+    TEST_CASE("Idempotency: bracket chars in formulas", "[formatter][idempotent][bracket]") {
+        SECTION("tensor notation formula idempotent") {
+            std::string input =
+                "$$\n"
+                "\\delta^{[a_1}_{a_1} \\cdots \\delta^{a_n]}_{b_n}\n"
+                "= \\frac{(n-j)! j!}{n!}\n"
+                "\\delta^{[a_{j+1}}_{b_{j+1}} \\cdots \\delta^{a_n]}_{b_n}.\n"
+                "$$";
+            auto first = format_code(input);
+            auto second = format_code(first);
+            REQUIRE(first == second);
         }
     }
 

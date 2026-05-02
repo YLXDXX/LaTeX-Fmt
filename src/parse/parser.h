@@ -60,8 +60,11 @@ namespace latex_fmt {
                     return node;
                 }
                 case TokenType::OpenBracket: {
-                    auto node = parseGroup(TokenType::OpenBracket, TokenType::CloseBracket);
+                    auto node = std::make_unique<Text>();
+                    node->content = "[";
+                    node->source = tok.source;
                     node->context = ctx;
+                    advance();
                     return node;
                 }
                 case TokenType::CloseBrace: {
@@ -71,6 +74,14 @@ namespace latex_fmt {
                     node->source = range;
                     node->content = "}";
                     node->is_malformed = true;
+                    return node;
+                }
+                case TokenType::CloseBracket: {
+                    auto node = std::make_unique<Text>();
+                    node->content = "]";
+                    node->source = tok.source;
+                    node->context = ctx;
+                    advance();
                     return node;
                 }
                 default:
@@ -289,9 +300,6 @@ namespace latex_fmt {
                     group->children.push_back(parseNewline());
                 } else if (peek().type == TokenType::OpenBrace && open == TokenType::OpenBracket) {
                     auto inner = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace);
-                    group->children.push_back(std::move(inner));
-                } else if (peek().type == TokenType::OpenBracket && open == TokenType::OpenBrace) {
-                    auto inner = parseGroup(TokenType::OpenBracket, TokenType::CloseBracket);
                     group->children.push_back(std::move(inner));
                 } else if (peek().type == TokenType::InlineMathStart) {
                     group->children.push_back(parseInlineMath(ParseContext::Text));
