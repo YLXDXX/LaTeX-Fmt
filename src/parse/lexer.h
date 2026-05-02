@@ -194,14 +194,14 @@ namespace latex_fmt {
                 return {TokenType::DisplayMathEnd, "\\]", {start, pos_}};
             }
 
-            if (!isalpha(c)) {
+            if (!isalpha(static_cast<unsigned char>(c))) {
                 std::string val = "\\";
                 val += consume();
                 return {TokenType::Text, val, {start, pos_}};
             }
 
             std::string cmd;
-            while (pos_ < input_.size() && isalpha(input_[pos_])) {
+            while (pos_ < input_.size() && isalpha(static_cast<unsigned char>(input_[pos_]))) {
                 cmd += consume();
             }
 
@@ -213,7 +213,7 @@ namespace latex_fmt {
                     consume();
                     skipWhitespace();
                     std::string env_name;
-                    while (pos_ < input_.size() && (isalpha(input_[pos_]) || input_[pos_] == '*')) {
+                    while (pos_ < input_.size() && (isalpha(static_cast<unsigned char>(input_[pos_])) || input_[pos_] == '*')) {
                         env_name += consume();
                     }
                     skipWhitespace();
@@ -230,9 +230,9 @@ namespace latex_fmt {
                         }
                     }
                     return tok;
-                } else if (isalpha(peek())) {
+                } else if (isalpha(static_cast<unsigned char>(peek()))) {
                     std::string env_name;
-                    while (pos_ < input_.size() && (isalpha(input_[pos_]) || input_[pos_] == '*')) {
+                    while (pos_ < input_.size() && (isalpha(static_cast<unsigned char>(input_[pos_])) || input_[pos_] == '*')) {
                         env_name += consume();
                     }
                     TokenType tt = (cmd == "begin") ? TokenType::BeginEnv : TokenType::EndEnv;
