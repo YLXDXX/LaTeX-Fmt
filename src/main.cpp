@@ -334,10 +334,16 @@ int main(int argc, char* argv[]) {
         }
 
         std::vector<std::string> tex_files;
-        for (auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".tex") {
-                tex_files.push_back(entry.path().string());
+        try {
+            for (auto& entry : std::filesystem::recursive_directory_iterator(dir,
+                     std::filesystem::directory_options::skip_permission_denied)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".tex") {
+                    tex_files.push_back(entry.path().string());
+                }
             }
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "latex-fmt: error: cannot traverse directory '" << dir << "': " << e.what() << "\n";
+            return 1;
         }
         std::sort(tex_files.begin(), tex_files.end());
 

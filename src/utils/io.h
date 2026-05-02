@@ -7,7 +7,7 @@
 namespace latex_fmt::utils {
 
 inline bool read_input(const std::string& path, std::string& out) {
-    std::ifstream ifs(path);
+    std::ifstream ifs(path, std::ios::binary);
     if (!ifs) {
         std::cerr << "latex-fmt: error: cannot read file '" << path << "'\n";
         return false;
@@ -19,7 +19,7 @@ inline bool read_input(const std::string& path, std::string& out) {
 }
 
 inline bool write_output(const std::string& path, const std::string& content) {
-    std::ofstream ofs(path);
+    std::ofstream ofs(path, std::ios::binary);
     if (!ofs) {
         std::cerr << "latex-fmt: error: cannot write file '" << path << "'\n";
         return false;
