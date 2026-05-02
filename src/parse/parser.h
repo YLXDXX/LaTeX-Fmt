@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "ast.h"
 #include "core/registry.h"
+#include "core/unicode_width.h"
 
 namespace latex_fmt {
 
@@ -226,7 +227,10 @@ namespace latex_fmt {
                     if (val.size() >= 2 && val[0] == '\\') {
                         consume_len = 2;
                     } else {
-                        consume_len = 1;
+                        size_t utf8_pos = 0;
+                        decode_utf8(val, utf8_pos);
+                        consume_len = static_cast<int>(utf8_pos);
+                        if (consume_len == 0) consume_len = 1;
                     }
                     arg_node->content = val.substr(0, consume_len);
                     arg_node->source.end_offset = arg_node->source.begin_offset + consume_len;
