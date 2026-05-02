@@ -46,7 +46,20 @@ namespace latex_fmt {
                         current_cell.clear();
                         pos += 2;
                         while (pos < line.size() && line[pos] == ' ') pos++;
-                        row.ending = " \\\\";
+                        std::string ending = " \\\\";
+                        if (pos < line.size() && line[pos] == '[') {
+                            ending += '[';
+                            pos++;
+                            while (pos < line.size() && line[pos] != ']') {
+                                ending += line[pos];
+                                pos++;
+                            }
+                            if (pos < line.size()) {
+                                ending += ']';
+                                pos++;
+                            }
+                        }
+                        row.ending = ending;
                         break;
                     } else {
                         current_cell += line[pos];
