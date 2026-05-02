@@ -321,18 +321,24 @@ namespace latex_fmt {
             }
 
             if (n.is_line_end) {
-                std::string out = output_.str();
-                if (!out.empty() && (out.back() == ' ' || out.back() == '\t')) {
-                    size_t last_non_space = out.find_last_not_of(" \t");
-                    if (last_non_space != std::string::npos) {
-                        output_.str(out.substr(0, last_non_space + 1));
-                        output_.seekp(0, std::ios::end);
-                    } else {
-                        output_.str("");
-                        output_.seekp(0, std::ios::end);
+                bool has_content = false;
+                {
+                    std::string out = output_.str();
+                    if (!out.empty() && (out.back() == ' ' || out.back() == '\t')) {
+                        size_t last_non_space = out.find_last_not_of(" \t");
+                        if (last_non_space != std::string::npos) {
+                            output_.str(out.substr(0, last_non_space + 1));
+                            output_.seekp(0, std::ios::end);
+                            has_content = true;
+                        } else {
+                            output_.str("");
+                            output_.seekp(0, std::ios::end);
+                        }
+                    } else if (!out.empty()) {
+                        has_content = true;
                     }
                 }
-                if (!out.empty()) output_ << ' ';
+                if (has_content) output_ << ' ';
                 output_ << text;
                 at_line_start_ = false;
                 endOutput(CharCategory::Other);
@@ -545,7 +551,7 @@ namespace latex_fmt {
                 output_ << getIndent();
                 at_line_start_ = false;
                 output_ << text.substr(first_non_space);
-                line_pos_ = static_cast<int>(first_non_space) + indent_level_ * 2;
+                line_pos_ = static_cast<int>(first_non_space) + indent_level_ * config_.indent_width;
             } else {
                 output_ << text;
                 line_pos_ += static_cast<int>(text.size());

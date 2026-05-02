@@ -49,7 +49,8 @@ inline std::string wrap_line(const std::string& line, int max_width, const std::
             for (size_t i = search_end; i > pos; --i) {
                 char ch = line[i - 1];
                 bool found = false;
-                if (pass == 0 && (ch == '.' || ch == '?' || ch == '!') && i < line.size()) found = true;
+                if (pass == 0 && (ch == '.' || ch == '?' || ch == '!')
+                    && i < line.size() && line[i] == ' ') found = true;
                 if (pass == 1 && (ch == ';' || ch == ':' || ch == ',')) found = true;
                 if (pass == 2 && ch == ' ') found = true;
                 if (found) {
@@ -99,9 +100,10 @@ inline std::string apply_wrapping(const std::string& formatted, const latex_fmt:
         }
         orig_indent = line.substr(0, first);
         body = line.substr(first);
-        std::string cont = orig_indent + "  ";
-
-        out << orig_indent << wrap_line(body, config.max_line_width - (int)orig_indent.size(), cont) << "\n";
+        int wrap_width = config.max_line_width - (int)orig_indent.size();
+        if (wrap_width < 1) wrap_width = 1;
+        std::string cont = orig_indent + std::string(config.indent_width, ' ');
+        out << orig_indent << wrap_line(body, wrap_width, cont) << "\n";
     }
 
     return out.str();
