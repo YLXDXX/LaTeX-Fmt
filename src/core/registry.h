@@ -10,7 +10,7 @@ namespace latex_fmt {
         bool mandatory_braces = true; // 是否强制补全花括号
     };
 
-    enum class AlignStrategy { None, AlignmentPair, Matrix, Cases };
+    enum class AlignStrategy { None, AlignmentPair, Matrix, Cases, Tabular };
 
     struct EnvRule {
         AlignStrategy align_strategy = AlignStrategy::None;
@@ -183,9 +183,9 @@ namespace latex_fmt {
             registerCommand("zhlipsum", {0, 1, false});
 
             // --- tabularray ---
-            registerEnv("tblr",     {AlignStrategy::None, false, false});
-            registerEnv("longtblr", {AlignStrategy::None, false, false});
-            registerEnv("talltblr", {AlignStrategy::None, false, false});
+            registerEnv("tblr",     {AlignStrategy::Tabular, false, false});
+            registerEnv("longtblr", {AlignStrategy::Tabular, false, false});
+            registerEnv("talltblr", {AlignStrategy::Tabular, false, false});
 
             // --- Math alignment environments ---
             registerEnv("align",     {AlignStrategy::AlignmentPair, false, true});
@@ -223,8 +223,15 @@ namespace latex_fmt {
             registerEnv("minted",     {AlignStrategy::None, true, false});
 
             // --- Table environments ---
-            registerEnv("tabular",  {AlignStrategy::None, false, false});
-            registerEnv("tabularx", {AlignStrategy::None, false, false});
+            registerEnv("tabular",  {AlignStrategy::Tabular, false, false});
+            registerEnv("tabularx", {AlignStrategy::Tabular, false, false});
+
+            // --- Table rule commands ---
+            registerCommand("hline",      {0, 1, false});
+            registerCommand("toprule",    {0, 0, false});
+            registerCommand("midrule",    {0, 0, false});
+            registerCommand("bottomrule", {0, 0, false});
+            registerCommand("cmidrule",   {0, 0, false});
 
             // --- Other common environments ---
             registerEnv("figure",       {AlignStrategy::None, false, false});

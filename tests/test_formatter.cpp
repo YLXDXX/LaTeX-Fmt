@@ -562,6 +562,55 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Table alignment: tabular with \\hline", "[formatter][table]") {
+        SECTION("\\hline on separate lines") {
+            std::string result = format_code(
+                "\\begin{tabular}{lcc}\\hline A & B & C \\\\\\hline D & E & F \\\\\\hline\\end{tabular}"
+            );
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\hline\n"));
+            REQUIRE_THAT(result, !Catch::Matchers::ContainsSubstring("\\hline A"));
+        }
+
+        SECTION("column alignment in tabular") {
+            std::string result = format_code(
+                "\\begin{tabular}{lr}\nName & 123 \\\\\nLongName & 5\n\\end{tabular}"
+            );
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("LongName"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("  & 123"));
+        }
+
+        SECTION("\\hline after \\\\ splitting") {
+            std::string result = format_code(
+                "\\begin{tabular}{cc}\\hline a & b \\\\\\hline c & d \\\\\\hline\\end{tabular}"
+            );
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\hline"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("a & b"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("c & d"));
+        }
+    }
+
+    TEST_CASE("Table alignment: tblr with \\hline", "[formatter][table]") {
+        SECTION("tblr shorthands aligned") {
+            std::string result = format_code(
+                "\\begin{tblr}{|l|c|r|}\\hline Header 1 & Header 2 & Header 3 \\\\\\hline Data A   & Data B   & Data C   \\\\\\hline\\end{tblr}"
+            );
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\hline"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("Header 1"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("Data A"));
+        }
+    }
+
+    TEST_CASE("Table alignment: \\toprule/\\midrule/\\bottomrule", "[formatter][table]") {
+        SECTION("booktabs rules separated") {
+            std::string result = format_code(
+                "\\begin{tabular}{lcc}\\toprule A & B & C \\\\\\midrule D & E & F \\\\\\bottomrule\\end{tabular}"
+            );
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\toprule\n"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\midrule\n"));
+            REQUIRE_THAT(result, Catch::Matchers::ContainsSubstring("\\bottomrule\n"));
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  边界情况
     // ═══════════════════════════════════════════════════════════

@@ -6,6 +6,15 @@
 
 namespace latex_fmt {
 
+    inline bool isRuleCmdLine(const std::string& s) {
+        return s == "\\hline"
+            || s == "\\toprule"
+            || s == "\\midrule"
+            || s == "\\bottomrule"
+            || s.rfind("\\hline[", 0) == 0
+            || s.rfind("\\cmidrule", 0) == 0;
+    }
+
     struct AlignCell {
         std::string content;
         int width;
@@ -82,6 +91,9 @@ namespace latex_fmt {
                     !row.cells[0].content.empty() && row.cells[0].content[0] == '%') {
                     continue;
                 }
+                if (row.cells.size() == 1 && isRuleCmdLine(row.cells[0].content)) {
+                    continue;
+                }
                 for (size_t i = 0; i < row.cells.size(); ++i) {
                     col_widths[i] = std::max(col_widths[i], row.cells[i].width);
                 }
@@ -90,6 +102,11 @@ namespace latex_fmt {
             std::string result;
             for (size_t r = 0; r < rows.size(); ++r) {
                 const auto& row = rows[r];
+                if (row.cells.size() == 1 && isRuleCmdLine(row.cells[0].content)) {
+                    result += row.cells[0].content + row.ending;
+                    if (r < rows.size() - 1) result += "\n";
+                    continue;
+                }
                 for (size_t i = 0; i < row.cells.size(); ++i) {
                     result += row.cells[i].content;
                     if (i < row.cells.size() - 1) {

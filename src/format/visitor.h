@@ -9,6 +9,11 @@
 
 namespace latex_fmt {
 
+    inline bool isTableRuleCommand(const std::string& name) {
+        return name == "hline" || name == "toprule" || name == "midrule"
+            || name == "bottomrule" || name == "cmidrule";
+    }
+
     class FormatVisitor {
     public:
         FormatVisitor(const Registry& registry, std::string_view source)
@@ -39,7 +44,8 @@ namespace latex_fmt {
             bool is_verbatim = rule && rule->is_verbatim;
             bool needs_align = rule && (rule->align_strategy == AlignStrategy::AlignmentPair ||
             rule->align_strategy == AlignStrategy::Matrix ||
-            rule->align_strategy == AlignStrategy::Cases);
+            rule->align_strategy == AlignStrategy::Cases ||
+            rule->align_strategy == AlignStrategy::Tabular);
 
             ensureNewline();
             writeText("\\begin{" + n.name + "}");
@@ -81,6 +87,25 @@ namespace latex_fmt {
                 std::vector<std::string> lines;
                 std::ostringstream current_line;
                 for (const auto& child : n.children) {
+                    if (rule->align_strategy == AlignStrategy::Tabular) {
+                        if (auto* cmd = dynamic_cast<const Command*>(child.get())) {
+                            if (isTableRuleCommand(cmd->name)) {
+                                std::string cl = current_line.str();
+                                if (cl.find_first_not_of(" \t\n") != std::string::npos) {
+                                    lines.push_back(std::move(cl));
+                                }
+                                current_line.str("");
+                                current_line.clear();
+
+                                ScopedBuffer buf(*this);
+                                visitNode(*child);
+                                std::string rule_text = buf.str();
+                                lines.push_back(rule_text);
+                                continue;
+                            }
+                        }
+                    }
+
                     bool child_verb = false;
                     if (auto* t = dynamic_cast<const Text*>(child.get())) {
                         child_verb = t->is_verbatim;
