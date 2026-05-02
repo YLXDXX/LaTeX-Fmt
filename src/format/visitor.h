@@ -183,6 +183,16 @@ namespace latex_fmt {
             flushPendingSpace();
             writeText("\\" + n.name);
 
+            size_t actual_opt = 0;
+            for (const auto& a : n.args) {
+                if (auto* g = dynamic_cast<const Group*>(a.get())) {
+                    if (g->delim_open == "[") actual_opt++;
+                    else break;
+                } else {
+                    break;
+                }
+            }
+
             for (size_t i = 0; i < n.args.size(); ++i) {
                 const auto& arg = n.args[i];
                 if (auto* g = dynamic_cast<const Group*>(arg.get())) {
@@ -196,7 +206,7 @@ namespace latex_fmt {
                     bool do_brace = config_.brace_completion
                         && t->content.size() == 1
                         && t->content != "{" && t->content != "["
-                        && i >= (size_t)sig->optional_args
+                        && i >= actual_opt
                         && sig->mandatory_braces;
                     if (do_brace) {
                         writeText("{" + t->content + "}");

@@ -225,6 +225,22 @@ namespace latex_fmt {
         SECTION("sqrt with optional arg and space") {
             REQUIRE(format_code("\\sqrt [3] 2") == "\\sqrt[3]{2}");
         }
+
+        SECTION("sqrt shorthand without optional arg") {
+            REQUIRE(format_code("\\sqrt3") == "\\sqrt{3}");
+        }
+
+        SECTION("sqrt shorthand in inline math") {
+            REQUIRE(format_code("$\\sqrt3$") == "$\\sqrt{3}$");
+        }
+
+        SECTION("sqrt with space between command and arg") {
+            REQUIRE(format_code("\\sqrt 5") == "\\sqrt{5}");
+        }
+
+        SECTION("frac and sqrt together in math") {
+            REQUIRE(format_code("$\\frac12 + \\sqrt3$") == "$\\frac{1}{2} + \\sqrt{3}$");
+        }
     }
 
     TEST_CASE("R2: unknown commands are not modified", "[formatter][R2]") {
