@@ -70,6 +70,8 @@ latex-fmt --md < input.md > output.tex
 | 行间公式独立 | `$$...$$` 自动独立成行并缩进 |
 | 错误恢复 | 不匹配的花括号、缺失 `\end` 时不会崩溃，尽力恢复 |
 | 长行警告与自动换行 | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
+| 语法检查 | `--syntax-check` 检查环境/花括号/数学定界符配对，报告位置 |
+| 语法修复 | `--syntax-fix` 基于语法检查结果自动补全缺失的 `}` `]` `$` `$$` `\end` 等 |
 
 ### 可配置参数
 
@@ -88,10 +90,12 @@ latex-fmt --md < input.md > output.tex
 | `--max-line-width=N` | 0（关闭） | 当 N > 0 时，超长行触发警告 |
 | `--wrap` | 关闭 | 配合 `--max-line-width` 自动折行 |
 | `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行 |
+| `--syntax-check` | 关闭 | 格式化前检查语法错误（环境/括号/数学定界符配对） |
+| `--syntax-fix` | 关闭 | 自动补全缺失的 `}` `]` `$` `\end` 等定界符 |
 
 ## 使用指南
 
-### 检查与 diff 模式
+### 检查、diff 与修复模式
 
 ```bash
 # 检查是否需要格式化（CI 用，有变更时退出码为 1）
@@ -159,6 +163,32 @@ latex-fmt --md --indent-width=4 notes.md
 | 有序列表 | `1. item` | `\begin{enumerate} \item item \end{enumerate}` |
 | 引用 | `> quote` | `\begin{quote}quote\end{quote}` |
 
+### 语法检查与智能修复
+
+`--syntax-check` 在格式化前对文档进行基本语法校验，`--syntax-fix` 能自动修复检测到的缺失定界符问题。
+
+```bash
+# 仅检查语法（不格式化），有错误时退出码为 1
+latex-fmt --syntax-check paper.tex
+
+# 自动修复缺失的定界符并格式化
+latex-fmt --syntax-fix paper.tex
+```
+
+检测和修复覆盖范围：
+
+| 问题类型 | 示例 | `--syntax-check` | `--syntax-fix` |
+|---------|------|:---:|:---:|
+| 未关闭环境 | `\begin{document}` 缺少 `\end{document}` | 报错 | 插入 `\end{document}` |
+| 未关闭行内公式 | `$x+y` 缺少闭合 `$` | 报错 | 插入 `$` |
+| 未关闭行间公式 | `$$x+y` 缺少闭合 `$$` | 报错 | 插入 `$$` |
+| 未关闭花括号 | `\textbf{Bold` 缺少 `}` | 报错 | 插入 `}` |
+| 未关闭方括号 | `\sqrt[3{2}` 缺少 `]` | 报错 | 智能插入 `]` |
+| 多余闭合定界符 | `}text` 多余 `}` | 报错 | 插入 `{` 配对 |
+| 环境名缺括号 | `\begin{equation` 缺 `}` | 报错 | 自动识别 |
+
+> **注意**：`--syntax-check` 仅报告错误不修改文件。`--syntax-fix` 会修改源文件内容后再格式化。两者均默认关闭，适用于信任文档能正常编译的场景。
+
 ### 其他选项
 
 ```bash
@@ -203,7 +233,9 @@ latex-fmt/
 │   │   ├── registry.h     # 命令/环境签名注册表
 │   │   ├── char_category.h# 字符分类工具
 │   │   ├── unicode_width.h# UTF-8 解码与字符宽度
-│   │   └── source_location.h
+│   │   ├── source_location.h
+│   │   ├── syntax_check.h  # 语法检查器
+│   │   └── syntax_fix.h    # 语法修复器
 │   ├── parse/             # 词法与语法分析
 │   │   ├── ast.h          # AST 节点定义
 │   │   ├── lexer.h        # 词法分析器 → Token 流
