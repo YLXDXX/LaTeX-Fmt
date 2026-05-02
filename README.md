@@ -59,10 +59,10 @@ latex-fmt --md < input.md > output.tex
 | 规则 | 说明 |
 |------|------|
 | 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
-| 花括号补全 | `\frac12` → `\frac{1}{2}`（仅限已知命令） |
+| 花括号补全 | `\frac12` → `\frac{1}{2}`、`\sqrt3` → `\sqrt{3}`（仅限已知命令） |
 | 去冗余空白 | 文本模式多个空格压缩为 1 个；数学模式保留空格 |
 | 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
-| 公式对齐 | `align`、`matrix`、`cases` 等环境按 `&` 纵向对齐 |
+| 表格与公式对齐 | 表格（`tabular`/`tblr` 等）和数学环境（`align`/`matrix`/`cases`）中按 `&` 纵向对齐单元格，`\hline` 等分隔线独立成行 |
 | CJK-English 间距 | 中文与英文/数字之间自动添加空格 |
 | 注释规范化 | `%comment` → `% comment` |
 | 行尾空格清除 | 每行末尾空格全部删除 |
@@ -165,6 +165,10 @@ latex-fmt --md --indent-width=4 notes.md
 | 无序列表 | `- item` | `\begin{itemize} \item item \end{itemize}` |
 | 有序列表 | `1. item` | `\begin{enumerate} \item item \end{enumerate}` |
 | 引用 | `> quote` | `\begin{quote}quote\end{quote}` |
+| 行内公式 | `$E=mc^2$` | 原样保留（不转义内部字符） |
+| 行间公式 | `$$...$$` | 原样保留（内容不做转义） |
+
+> **注意**：公式中的 `&`、`\\`、`_`、`#` 等 LaTeX 特殊字符不会被转义，`$...$` 和 `$$...$$` 支持跨多行。`$$` 单独成行时视为行间公式，前方无空行时视为内联闭合定界符。
 
 ### 语法检查与智能修复
 
@@ -259,7 +263,7 @@ latex-fmt/
 │   │   └── parser.h       # 递归下降解析器 → AST
 │   ├── format/            # 格式化引擎
 │   │   ├── visitor.h      # AST Visitor，生成格式化输出
-│   │   └── math_aligner.h # 数学环境对齐算法
+│   │   └── math_aligner.h # 表格与数学环境列对齐算法
 │   ├── md/                # Markdown 转 LaTeX 转换
 │   │   └── md_converter.h # Markdown → LaTeX 转换器
 │   ├── utils/             # CLI 工具函数
@@ -419,6 +423,10 @@ ctest
 | `\only` `\uncover` `\visible` `\invisible` | `{2}` | 叠层条件显示 |
 | `\pause` `\titlepage` | — | 暂停/标题页 |
 
+#### 表格分隔线
+
+`\hline` `[1]`、`\toprule` `\midrule` `\bottomrule` `\cmidrule` — 表格横线命令，格式化时自动独立成行。
+
 ### 环境
 
 #### 数学环境
@@ -440,7 +448,9 @@ ctest
 
 #### 表格环境
 
-`tabular` `tabularx` `tblr` `longtblr` `talltblr`。
+| 环境 | 对齐策略 | 说明 |
+|------|---------|------|
+| `tabular` `tabularx` `tblr` `longtblr` `talltblr` | `&` 等宽列 + 分隔线独立行 | 表格单元格对齐 |
 
 #### 浮动体与子环境
 
