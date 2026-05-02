@@ -185,7 +185,11 @@ namespace latex_fmt {
                         cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace));
                     }
                 }
+            if (!cmd->args.empty()) {
+                cmd->source.end_offset = cmd->args.back()->source.end_offset;
+            } else {
                 cmd->source.end_offset = (pos_ > 0) ? tokens_[pos_-1].source.end_offset : cmd->source.begin_offset;
+            }
                 return cmd;
             }
 
