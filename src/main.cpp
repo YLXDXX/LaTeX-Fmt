@@ -66,6 +66,22 @@ static void print_version() {
     std::cout << "latex-fmt v" << LATEX_FMT_VERSION << "\n";
 }
 
+static int parse_int_or_exit(std::string_view arg, std::string_view opt_name) {
+    try {
+        size_t pos;
+        std::string s(arg);
+        int val = std::stoi(s, &pos);
+        if (pos != s.size()) {
+            std::cerr << "latex-fmt: error: invalid integer value for " << opt_name << ": '" << arg << "'\n";
+            std::exit(1);
+        }
+        return val;
+    } catch (const std::exception&) {
+        std::cerr << "latex-fmt: error: invalid integer value for " << opt_name << ": '" << arg << "'\n";
+        std::exit(1);
+    }
+}
+
 int main(int argc, char* argv[]) {
     latex_fmt::FormatConfig config;
     bool in_place = false;
@@ -146,11 +162,11 @@ int main(int argc, char* argv[]) {
             continue;
         }
         if (arg.compare(0, 17, "--max-line-width=") == 0) {
-            config.max_line_width = std::stoi(std::string(arg.substr(17)));
+            config.max_line_width = parse_int_or_exit(arg.substr(17), "--max-line-width");
             continue;
         }
         if (arg.compare(0, 15, "--indent-width=") == 0) {
-            config.indent_width = std::stoi(std::string(arg.substr(15)));
+            config.indent_width = parse_int_or_exit(arg.substr(15), "--indent-width");
             continue;
         }
         if (arg == "--no-cjk-spacing") {
