@@ -57,6 +57,7 @@ private:
     std::string convertEscapedChars(std::string text);
     std::string escapeLatexSpecials(std::string text);
     std::string convertLinks(std::string text);
+    std::string convertInlineContent(std::string text);
     std::string convertEmphasis(std::string text);
     std::string protectLatexCommands(std::string text, std::vector<std::string>& out);
     std::string restoreLatexCommands(std::string text, const std::vector<std::string>& cmds);
@@ -386,6 +387,17 @@ inline std::string MdConverter::convertInline(std::string text) {
     return text;
 }
 
+inline std::string MdConverter::convertInlineContent(std::string text) {
+    text = convertEscapedChars(std::move(text));
+    text = convertEmphasis(std::move(text));
+
+    std::vector<std::string> latex_cmds;
+    text = protectLatexCommands(std::move(text), latex_cmds);
+    text = escapeLatexSpecials(std::move(text));
+    text = restoreLatexCommands(std::move(text), latex_cmds);
+    return text;
+}
+
 // ───────────────────────────────────────────────
 //  Step 1: Extract inline code spans
 // ───────────────────────────────────────────────
@@ -608,7 +620,7 @@ inline std::string MdConverter::convertLinks(std::string text) {
 
         std::string link_text = text.substr(bracket + 1, close_bracket - bracket - 1);
         std::string url = text.substr(close_bracket + 2, close_paren - close_bracket - 2);
-        result += "\\href{" + url + "}{" + convertInline(link_text) + "}";
+        result += "\\href{" + url + "}{" + convertInlineContent(link_text) + "}";
         pos = close_paren + 1;
     }
     return result;
