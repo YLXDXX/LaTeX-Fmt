@@ -1433,4 +1433,67 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("SyntaxCheck: character-based column", "[syntax]") {
+        Registry registry;
+        registry.registerBuiltin();
+
+        auto get_errors = [&](const std::string& input) {
+            Lexer lexer(input, registry);
+            auto tokens = lexer.tokenize();
+            Parser parser(std::move(tokens), input, registry);
+            auto doc = parser.parse();
+            SyntaxChecker checker(input, *doc);
+            return checker.check();
+        };
+
+        auto get_context = [&](const std::string& input) {
+            auto errors = get_errors(input);
+            if (errors.empty()) return std::string();
+            return errors[0].context;
+        };
+
+        SECTION("CJK column is character-based not byte-based") {
+            auto errors = get_errors("充分性的{证明：\n");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].col == 5);
+        }
+
+        SECTION("ASCII column is character-based") {
+            auto errors = get_errors("abc{test\n");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].col == 4);
+        }
+
+        SECTION("context shows surrounding characters") {
+            auto ctx = get_context("充分性的{证明：已知 中文测试\n");
+            REQUIRE_FALSE(ctx.empty());
+            REQUIRE(ctx.find("充分性的") != std::string::npos);
+            REQUIRE(ctx.find("{") != std::string::npos);
+        }
+
+        SECTION("context at line start") {
+            auto ctx = get_context("{test\n");
+            REQUIRE_FALSE(ctx.empty());
+            REQUIRE(ctx.find("{test") != std::string::npos);
+        }
+
+        SECTION("context at line end") {
+            auto ctx = get_context("abc{\n");
+            REQUIRE_FALSE(ctx.empty());
+            REQUIRE(ctx.find("abc{") != std::string::npos);
+        }
+
+        SECTION("extraneous close brace column") {
+            auto errors = get_errors("中文}测试\n");
+            REQUIRE_FALSE(errors.empty());
+            REQUIRE(errors[0].col == 3);
+        }
+
+        SECTION("extraneous close brace context") {
+            auto ctx = get_context("中文}测试\n");
+            REQUIRE_FALSE(ctx.empty());
+            REQUIRE(ctx.find("中文}测试") != std::string::npos);
+        }
+    }
+
 } // namespace latex_fmt

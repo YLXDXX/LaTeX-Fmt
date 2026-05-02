@@ -18,6 +18,7 @@ struct FormatConfig {
     bool wrap = false;
     bool wrap_paragraphs = false;
     bool remove_tags = false;
+    int context_chars = 10;
 
     bool load_from_file(const std::string& path) {
         std::ifstream ifs(path);
@@ -57,6 +58,8 @@ struct FormatConfig {
                 wrap_paragraphs = parse_bool(value, false);
             } else if (key == "remove_tags") {
                 remove_tags = parse_bool(value, false);
+            } else if (key == "context_chars") {
+                context_chars = parse_int(value, context_chars);
             }
         }
         return true;

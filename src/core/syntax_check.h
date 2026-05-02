@@ -16,8 +16,8 @@ namespace latex_fmt {
             std::string context;
         };
 
-        SyntaxChecker(std::string_view source, const Document& ast)
-            : source_(source), ast_(ast) {
+        SyntaxChecker(std::string_view source, const Document& ast, int context_chars = 10)
+            : source_(source), ast_(ast), context_chars_(context_chars) {
             computeLineTable();
         }
 
@@ -92,7 +92,7 @@ namespace latex_fmt {
                 if ((b & 0xC0) != 0x80) char_idx++;
             }
 
-            int ctx_before = 5;
+            int ctx_before = context_chars_;
             size_t ctx_start = byte_offset;
             int seen = 0;
             while (seen < ctx_before && ctx_start > 0) {
@@ -101,7 +101,7 @@ namespace latex_fmt {
                 if ((b & 0xC0) != 0x80) seen++;
             }
 
-            int ctx_after = 5;
+            int ctx_after = context_chars_;
             size_t ctx_end = byte_offset;
             seen = 0;
             while (seen < ctx_after && ctx_end < line_str.size()) {
@@ -188,6 +188,7 @@ namespace latex_fmt {
         std::vector<size_t> line_starts_;
         std::vector<Error> errors_;
         std::vector<std::pair<std::string, size_t>> env_stack_;
+        int context_chars_ = 10;
     };
 
 } // namespace latex_fmt

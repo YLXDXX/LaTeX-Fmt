@@ -94,6 +94,7 @@ latex-fmt --md < input.md > output.tex
 | `--syntax-check` | 关闭 | 格式化前检查语法错误（环境/括号/数学定界符配对） |
 | `--syntax-fix` | 关闭 | 自动补全缺失的 `}` `]` `$` `\end` 等定界符 |
 | `--remove-tags` | 关闭 | 删除公式中的 `\tag{...}` / `\tag*{...}` 命令 |
+| `--context-chars=N` | 10 | `--syntax-check` 错误信息中显示的前后文字数 |
 
 ## 使用指南
 
@@ -175,6 +176,9 @@ latex-fmt --syntax-check paper.tex
 
 # 自动修复缺失的定界符并格式化
 latex-fmt --syntax-fix paper.tex
+
+# 调整错误上下文显示字符数（默认 10）
+latex-fmt --syntax-check --context-chars=20 paper.tex
 ```
 
 检测和修复覆盖范围：

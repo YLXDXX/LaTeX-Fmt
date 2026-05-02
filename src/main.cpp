@@ -52,6 +52,7 @@ static void print_help(const char* prog) {
         << "  --wrap                   Wrap long lines at word boundaries\n"
         << "  --wrap-paragraphs        Wrap paragraph text lines\n"
         << "  --remove-tags            Remove \\tag{...} commands from formulas\n"
+        << "  --context-chars=N        Context chars shown in --syntax-check errors (default: 10)\n"
         << "  --md                     Treat input as Markdown, convert to LaTeX and format\n"
         << "  --config-file=<path>     Read config from file (default: .latexfmtrc)\n"
         << "\n"
@@ -168,6 +169,10 @@ int main(int argc, char* argv[]) {
         }
         if (arg.compare(0, 15, "--indent-width=") == 0) {
             config.indent_width = parse_int_or_exit(arg.substr(15), "--indent-width");
+            continue;
+        }
+        if (arg.compare(0, 16, "--context-chars=") == 0) {
+            config.context_chars = parse_int_or_exit(arg.substr(16), "--context-chars");
             continue;
         }
         if (arg == "--no-cjk-spacing") {
@@ -298,7 +303,7 @@ int main(int argc, char* argv[]) {
         auto doc = par.parse();
 
         if (do_syntax_check || do_syntax_fix) {
-            latex_fmt::SyntaxChecker checker(source, *doc);
+            latex_fmt::SyntaxChecker checker(source, *doc, config.context_chars);
             auto errors = checker.check();
 
             if (!errors.empty()) {
