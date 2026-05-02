@@ -82,6 +82,27 @@ TEST_CASE("Registry: built-in commands", "[registry]") {
         REQUIRE(cmd->optional_args == 1);
         REQUIRE(cmd->mandatory_braces == false);
     }
+
+    SECTION("left and right are registered with 0 args") {
+        auto* left = reg.lookupCmd("left");
+        REQUIRE(left != nullptr);
+        REQUIRE(left->mandatory_args == 0);
+        REQUIRE(left->optional_args == 0);
+        auto* right = reg.lookupCmd("right");
+        REQUIRE(right != nullptr);
+        REQUIRE(right->mandatory_args == 0);
+    }
+
+    SECTION("delimiter sizing commands are registered with 0 args") {
+        for (const auto& name : {"bigl", "Bigl", "biggl", "Biggl",
+                                 "bigr", "Bigr", "biggr", "Biggr",
+                                 "big", "Big", "bigg", "Bigg"}) {
+            auto* cmd = reg.lookupCmd(name);
+            REQUIRE(cmd != nullptr);
+            REQUIRE(cmd->mandatory_args == 0);
+            REQUIRE(cmd->mandatory_braces == false);
+        }
+    }
 }
 
 TEST_CASE("Registry: built-in environments", "[registry]") {

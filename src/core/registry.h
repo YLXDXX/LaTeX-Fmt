@@ -91,6 +91,14 @@ namespace latex_fmt {
                 registerCommand(cmd, {0, 0, false});
             }
 
+            // --- Delimiter sizing commands (delimiter is a separate token) ---
+            for (const auto& cmd : {"left", "right",
+                                    "bigl", "Bigl", "biggl", "Biggl",
+                                    "bigr", "Bigr", "biggr", "Biggr",
+                                    "big", "Big", "bigg", "Bigg"}) {
+                registerCommand(cmd, {0, 0, false});
+            }
+
             // --- List command ---
             registerCommand("item", {0, 1, false});
 

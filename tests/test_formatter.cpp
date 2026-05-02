@@ -1717,4 +1717,47 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Delimiter sizing commands are preserved", "[formatter][bracket]") {
+        SECTION("left-right pairs") {
+            auto result = format_code("$\\left( \\frac{1}{2} \\right)$");
+            REQUIRE(result.find("\\left( \\frac{1}{2} \\right)") != std::string::npos);
+        }
+
+        SECTION("bigl-bigr with parens") {
+            auto result = format_code("$\\bigl( x \\bigr)$");
+            REQUIRE(result.find("\\bigl( x \\bigr)") != std::string::npos);
+        }
+
+        SECTION("Bigl-Bigr with brackets") {
+            auto result = format_code("$\\Bigl[ x \\Bigr]$");
+            REQUIRE(result.find("\\Bigl[ x \\Bigr]") != std::string::npos);
+        }
+
+        SECTION("biggl-biggr with braces") {
+            auto result = format_code("$\\biggl\\{ x \\biggr\\}$");
+            REQUIRE(result.find("\\biggl\\{ x \\biggr\\}") != std::string::npos);
+        }
+
+        SECTION("Biggl-Biggr with langle-rangle") {
+            auto result = format_code("$\\Biggl\\langle x \\Biggr\\rangle$");
+            REQUIRE(result.find("\\Biggl\\langle x \\Biggr\\rangle") != std::string::npos);
+        }
+
+        SECTION("big-Big-bigg-Bigg single") {
+            auto result = format_code("$\\big| x \\big|$ $\\Big| x \\Big|$ $\\bigg| x \\bigg|$ $\\Bigg| x \\Bigg|$");
+            REQUIRE(result.find("\\big|") != std::string::npos);
+            REQUIRE(result.find("\\Big|") != std::string::npos);
+            REQUIRE(result.find("\\bigg|") != std::string::npos);
+            REQUIRE(result.find("\\Bigg|") != std::string::npos);
+        }
+
+        SECTION("lfloor-rfloor and lceil-rceil") {
+            auto result = format_code("$\\bigl\\lfloor x \\bigr\\rfloor$ $\\bigl\\lceil x \\bigr\\rceil$");
+            REQUIRE(result.find("\\bigl\\lfloor") != std::string::npos);
+            REQUIRE(result.find("\\bigr\\rfloor") != std::string::npos);
+            REQUIRE(result.find("\\bigl\\lceil") != std::string::npos);
+            REQUIRE(result.find("\\bigr\\rceil") != std::string::npos);
+        }
+    }
+
 } // namespace latex_fmt
