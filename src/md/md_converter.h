@@ -168,6 +168,10 @@ inline std::string MdConverter::convert(std::string_view input) {
         }
 
         if (isDisplayMathFence(line)) {
+            if (!block_lines.empty()) {
+                block_lines.push_back(line);
+                continue;
+            }
             flushBlock();
             in_display_math_ = true;
             out << raw_line << "\n";

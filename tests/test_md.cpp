@@ -318,6 +318,20 @@ TEST_CASE("Markdown: LaTeX math passthrough", "[md]") {
         REQUIRE(result.find("\\end{pmatrix}") != std::string::npos);
         REQUIRE(result.find("\\$") == std::string::npos);
     }
+
+    SECTION("display math closing $$ on its own line") {
+        std::string result = convert("公式$$\n\\begin{pmatrix}a+b & 0 \\\\\n0   & c+d\n\\end{pmatrix}\n$$\n测试\n");
+        REQUIRE(result.find("\\begin{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("a+b & 0") != std::string::npos);
+        REQUIRE(result.find("\\end{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
+
+    SECTION("display math on own lines with blank line separation") {
+        std::string result = convert("text\n\n$$\na + b\n$$\n\nmore\n");
+        REQUIRE(result.find("a + b") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
 }
 
 TEST_CASE("Markdown: CLI --md flag", "[cli][md]") {
