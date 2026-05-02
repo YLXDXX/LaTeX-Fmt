@@ -1076,6 +1076,50 @@ namespace latex_fmt {
             auto errors = check_syntax("\\begin{document}\n$x+y");
             REQUIRE(errors.size() >= 2);
         }
+
+        SECTION("many unclosed braces") {
+            auto errors = check_syntax("\\textbf{\\textit{\\emph{text");
+            REQUIRE(errors.size() >= 3);
+        }
+
+        SECTION("cross-type group error") {
+            auto errors = check_syntax("\\sqrt[3{2}");
+            REQUIRE_FALSE(errors.empty());
+        }
+    }
+
+    TEST_CASE("SyntaxCheck: long document errors", "[syntax]") {
+        std::string doc =
+            "\\begin{document}\n"
+            "\\begin{figure}\n"
+            "  \\textbf{$x\n"
+            "\\end{figure}\n"
+            "\\end{document\n";
+        auto errors = check_syntax(doc);
+        REQUIRE_FALSE(errors.empty());
+        REQUIRE(errors.size() >= 3);
+    }
+
+    TEST_CASE("SyntaxCheck: valid complex document no errors", "[syntax]") {
+        std::string doc =
+            "\\documentclass{article}\n"
+            "\\usepackage{amsmath}\n"
+            "\\begin{document}\n"
+            "\\section{Introduction}\n"
+            "The formula $E=mc^2$ is famous.\n"
+            "\\begin{equation}\n"
+            "  f(x) = x^2 + 2x + 1\n"
+            "\\end{equation}\n"
+            "\\begin{figure}[h]\n"
+            "  \\centering\n"
+            "  \\includegraphics{plot.pdf}\n"
+            "  \\caption{A nice figure}\n"
+            "  \\label{fig:plot}\n"
+            "\\end{figure}\n"
+            "See Figure~\\ref{fig:plot}.\n"
+            "\\end{document}\n";
+        auto errors = check_syntax(doc);
+        REQUIRE(errors.empty());
     }
 
     std::string fix_syntax_errors(const std::string& input) {
@@ -1168,6 +1212,149 @@ namespace latex_fmt {
         SECTION("complete group") {
             auto fixed = fix_syntax_errors("\\textbf{Bold}");
             REQUIRE(fixed == "\\textbf{Bold}");
+        }
+    }
+
+    TEST_CASE("SyntaxFix: nested unclosed braces", "[syntax][fix]") {
+        SECTION("two levels nested") {
+            auto fixed = fix_syntax_errors("\\textbf{\\textit{inner");
+            REQUIRE(fixed.find("inner}}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("three levels nested") {
+            auto fixed = fix_syntax_errors("{\\textbf{\\textit{text");
+            REQUIRE(fixed.find("text}}}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: cross-type group in commands", "[syntax][fix]") {
+        SECTION("sqrt bracket then brace") {
+            auto fixed = fix_syntax_errors("\\sqrt[3{2}");
+            REQUIRE(fixed.find("\\sqrt[3]{2}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("binom bracket then brace") {
+            auto fixed = fix_syntax_errors("\\binom[3{2}");
+            REQUIRE(fixed.find("]") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: environment with missing braces in name", "[syntax][fix]") {
+        SECTION("unclosed environment still detected") {
+            auto fixed = fix_syntax_errors("\\begin{document}\nHello\n");
+            REQUIRE(fixed.find("\\end{document}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: long document with scattered errors", "[syntax][fix]") {
+        std::string doc =
+            "\\begin{document}\n"
+            "\\section{Intro}\n"
+            "Here is $E=mc^2 without closing.\n"
+            "Here is {unclosed brace.\n"
+            "Here is $$display unclosed.\n"
+            "\\end{document}\n";
+        auto fixed = fix_syntax_errors(doc);
+        REQUIRE(fixed != doc);
+        REQUIRE(fixed.find("$") != std::string::npos);
+        REQUIRE(fixed.find("}") != std::string::npos);
+    }
+
+    TEST_CASE("SyntaxFix: long document with nested errors", "[syntax][fix]") {
+        std::string doc =
+            "\\begin{document}\n"
+            "\\begin{itemize}\n"
+            "  \\item First $x\n"
+            "  \\item Second {unclosed\n"
+            "  \\item Third\n"
+            "\\end{itemize}\n"
+            "\\end{document}\n";
+        auto fixed = fix_syntax_errors(doc);
+        REQUIRE(fixed != doc);
+        REQUIRE(fixed.find("$") != std::string::npos);
+        REQUIRE(fixed.find("}") != std::string::npos);
+    }
+
+    TEST_CASE("SyntaxFix: deep nesting with multiple fix types", "[syntax][fix]") {
+        std::string doc =
+            "\\begin{document}\n"
+            "\\begin{figure}\n"
+            "  \\begin{center}\n"
+            "    \\textbf{$x + y\n"
+            "  \\end{center}\n"
+            "\\end{figure}\n"
+            "\\end{document}\n";
+        auto fixed = fix_syntax_errors(doc);
+        REQUIRE_FALSE(has_syntax_errors(fixed));
+        REQUIRE(fixed.find("$") != std::string::npos); // math was closed
+        REQUIRE(fixed.find("}") != std::string::npos); // brace was closed
+    }
+
+    TEST_CASE("SyntaxFix: fixes are idempotent", "[syntax][fix]") {
+        SECTION("double fix same result") {
+            auto first = fix_syntax_errors("\\textbf{$x+y");
+            auto second = fix_syntax_errors(first);
+            REQUIRE(first == second);
+        }
+
+        SECTION("complex case idempotent") {
+            auto first = fix_syntax_errors("\\begin{document}\n\\begin{figure}\n$x\n\\end{figure}\n\\end{document}");
+            auto second = fix_syntax_errors(first);
+            REQUIRE(first == second);
+        }
+    }
+
+    TEST_CASE("SyntaxFix: edge cases", "[syntax][fix]") {
+        SECTION("only whitespace unchanged") {
+            auto fixed = fix_syntax_errors("   \n  \n  ");
+            REQUIRE(fixed == "   \n  \n  ");
+        }
+
+        SECTION("empty string unchanged") {
+            auto fixed = fix_syntax_errors("");
+            REQUIRE(fixed == "");
+        }
+
+        SECTION("text without any braces unchanged") {
+            auto fixed = fix_syntax_errors("Hello world, no LaTeX at all.");
+            REQUIRE(fixed == "Hello world, no LaTeX at all.");
+        }
+
+        SECTION("many stray closing braces") {
+            auto fixed = fix_syntax_errors("text}}more}}");
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("unclosed brace in text mode") {
+            auto fixed = fix_syntax_errors("Some text {with unclosed group");
+            REQUIRE(fixed.find("group}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: correct content not broken by fixes", "[syntax][fix]") {
+        SECTION("long valid document unchanged") {
+            std::string doc =
+                "\\begin{document}\n"
+                "\\section{Intro}\n"
+                "Hello $x+y$ world.\n"
+                "\\textbf{Bold} and \\textit{italic}.\n"
+                "\\begin{equation}\n"
+                "  E = mc^2\n"
+                "\\end{equation}\n"
+                "\\begin{figure}\n"
+                "  \\centering\n"
+                "  \\includegraphics{img.pdf}\n"
+                "  \\caption{A figure}\n"
+                "\\end{figure}\n"
+                "\\end{document}\n";
+            auto fixed = fix_syntax_errors(doc);
+            REQUIRE(fixed == doc);
         }
     }
 
