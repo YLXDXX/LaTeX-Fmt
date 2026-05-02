@@ -281,6 +281,28 @@ TEST_CASE("Markdown: LaTeX math passthrough", "[md]") {
         REQUIRE(result.find("a & b") != std::string::npos);
         REQUIRE(result.find("\\end{cases}") != std::string::npos);
     }
+
+    SECTION("multi-line inline math with pmatrix preserved") {
+        std::string result = convert("公式$\n  \\begin{pmatrix}\n    a+b & 0 \\\\\n    0   & c+d\n  \\end{pmatrix}\n$测试\n");
+        REQUIRE(result.find("\\begin{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("a+b & 0") != std::string::npos);
+        REQUIRE(result.find("0   & c+d") != std::string::npos);
+        REQUIRE(result.find("\\end{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
+
+    SECTION("multi-line inline math with simple content preserved") {
+        std::string result = convert("text $\na + b\n$ more\n");
+        REQUIRE(result.find("a + b") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
+
+    SECTION("multi-line inline math with special chars not escaped") {
+        std::string result = convert("$\na_i & b_j \\\\\n$ end\n");
+        REQUIRE(result.find("a_i & b_j") != std::string::npos);
+        REQUIRE(result.find("\\&") == std::string::npos);
+        REQUIRE(result.find("\\_") == std::string::npos);
+    }
 }
 
 TEST_CASE("Markdown: CLI --md flag", "[cli][md]") {

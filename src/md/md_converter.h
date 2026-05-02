@@ -116,11 +116,11 @@ inline std::string MdConverter::convert(std::string_view input) {
             out << convertBlockquote(quote_lines);
             quote_lines.clear();
         } else if (!block_lines.empty()) {
-            out << convertInline(block_lines[0]);
+            std::string joined = block_lines[0];
             for (size_t i = 1; i < block_lines.size(); ++i) {
-                out << " " << convertInline(block_lines[i]);
+                joined += " " + block_lines[i];
             }
-            out << "\n";
+            out << convertInline(joined) << "\n";
             block_lines.clear();
         }
     };
@@ -229,7 +229,9 @@ inline std::string MdConverter::convert(std::string_view input) {
             continue;
         }
 
-        flushBlock();
+        if (block_state_ != Normal) {
+            flushBlock();
+        }
         block_lines.push_back(line);
         block_state_ = Normal;
     }
