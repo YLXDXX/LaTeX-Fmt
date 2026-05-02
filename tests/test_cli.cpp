@@ -575,3 +575,50 @@ TEST_CASE("CLI: --syntax-check option", "[cli][syntax]") {
         std::filesystem::remove(f);
     }
 }
+
+TEST_CASE("CLI: --syntax-fix option", "[cli][syntax]") {
+    SECTION("valid document passes through") {
+        auto f = tmp_path("fix_valid.tex");
+        write_file(f, "\\begin{document}\nHello\n\\end{document}\n");
+        auto r = run_cmd("--syntax-fix " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("Hello"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("unclosed brace is fixed") {
+        auto f = tmp_path("fix_brace.tex");
+        write_file(f, "\\textbf{Hello\n");
+        auto r = run_cmd("--syntax-fix " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("inserted '}'"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("unclosed environment is fixed") {
+        auto f = tmp_path("fix_env.tex");
+        write_file(f, "\\begin{document}\nHello\n");
+        auto r = run_cmd("--syntax-fix " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("inserted '\\end{document}'"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("unclosed math is fixed") {
+        auto f = tmp_path("fix_math.tex");
+        write_file(f, "$x+y\n");
+        auto r = run_cmd("--syntax-fix " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, Catch::Matchers::ContainsSubstring("inserted '$'"));
+        std::filesystem::remove(f);
+    }
+
+    SECTION("without --syntax-fix, no fix is applied") {
+        auto f = tmp_path("no_fix.tex");
+        write_file(f, "\\textbf{Bold\n");
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE_THAT(r.output, !Catch::Matchers::ContainsSubstring("inserted"));
+        std::filesystem::remove(f);
+    }
+}

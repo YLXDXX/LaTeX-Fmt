@@ -34,6 +34,10 @@ namespace latex_fmt {
             return errors_;
         }
 
+        std::pair<int, int> getLineCol(size_t offset) const {
+            return offsetToLineCol(offset);
+        }
+
     private:
         void computeLineTable() {
             line_starts_.push_back(0);
@@ -44,7 +48,7 @@ namespace latex_fmt {
             }
         }
 
-        std::pair<int, int> offsetToLineCol(size_t offset) {
+        std::pair<int, int> offsetToLineCol(size_t offset) const {
             if (offset >= source_.size()) offset = source_.size();
             int line = 1;
             int col = 1;

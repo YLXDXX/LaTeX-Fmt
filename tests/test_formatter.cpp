@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include "core/registry.h"
 #include "core/syntax_check.h"
+#include "core/syntax_fix.h"
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
@@ -1074,6 +1075,99 @@ namespace latex_fmt {
         SECTION("unclosed math and environment") {
             auto errors = check_syntax("\\begin{document}\n$x+y");
             REQUIRE(errors.size() >= 2);
+        }
+    }
+
+    std::string fix_syntax_errors(const std::string& input) {
+        Registry registry;
+        registry.registerBuiltin();
+        Lexer lexer(input, registry);
+        auto tokens = lexer.tokenize();
+        Parser parser(std::move(tokens), input, registry);
+        auto doc = parser.parse();
+        SyntaxFixer fixer(input, *doc);
+        return fixer.apply();
+    }
+
+    bool has_syntax_errors(const std::string& input) {
+        Registry registry;
+        registry.registerBuiltin();
+        Lexer lexer(input, registry);
+        auto tokens = lexer.tokenize();
+        Parser parser(std::move(tokens), input, registry);
+        auto doc = parser.parse();
+        SyntaxChecker checker(input, *doc);
+        return !checker.check().empty();
+    }
+
+    TEST_CASE("SyntaxFix: unclosed brace is fixed", "[syntax][fix]") {
+        SECTION("unclosed curly brace") {
+            auto fixed = fix_syntax_errors("\\textbf{Bold");
+            REQUIRE(fixed.find("}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("unclosed bracket in sqrt") {
+            auto fixed = fix_syntax_errors("\\sqrt[3{2}");
+            REQUIRE(fixed.find("]") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: unclosed environment is fixed", "[syntax][fix]") {
+        SECTION("missing end document") {
+            auto fixed = fix_syntax_errors("\\begin{document}\nHello");
+            REQUIRE(fixed.find("\\end{document}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("nested environment fix") {
+            auto fixed = fix_syntax_errors(
+                "\\begin{document}\n"
+                "\\begin{figure}\n"
+                "content\n"
+                "\\end{document}");
+            REQUIRE(fixed.find("\\end{figure}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: unclosed math is fixed", "[syntax][fix]") {
+        SECTION("missing closing inline math") {
+            auto fixed = fix_syntax_errors("$x+y");
+            REQUIRE(fixed.find("$x+y$") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+
+        SECTION("missing closing display math") {
+            auto fixed = fix_syntax_errors("$$x+y");
+            REQUIRE(fixed.find("$$x+y$$") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: multiple fixes applied", "[syntax][fix]") {
+        SECTION("unclosed brace and math") {
+            auto fixed = fix_syntax_errors("\\textbf{$x+y");
+            REQUIRE(fixed.find("$}") != std::string::npos);
+            REQUIRE_FALSE(has_syntax_errors(fixed));
+        }
+    }
+
+    TEST_CASE("SyntaxFix: valid input unchanged", "[syntax][fix]") {
+        SECTION("complete document") {
+            auto fixed = fix_syntax_errors("\\begin{document}\nHello\n\\end{document}");
+            REQUIRE(fixed == "\\begin{document}\nHello\n\\end{document}");
+        }
+
+        SECTION("complete math") {
+            auto fixed = fix_syntax_errors("$x+y$");
+            REQUIRE(fixed == "$x+y$");
+        }
+
+        SECTION("complete group") {
+            auto fixed = fix_syntax_errors("\\textbf{Bold}");
+            REQUIRE(fixed == "\\textbf{Bold}");
         }
     }
 

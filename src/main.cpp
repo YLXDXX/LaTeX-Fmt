@@ -8,6 +8,7 @@
 #include "core/registry.h"
 #include "core/config.h"
 #include "core/syntax_check.h"
+#include "core/syntax_fix.h"
 #include "parse/lexer.h"
 #include "parse/parser.h"
 #include "format/visitor.h"
@@ -36,6 +37,7 @@ static void print_help(const char* prog) {
         << "  --diff                   Show unified diff instead of formatted output\n"
         << "  --quiet, -q              Suppress warnings\n"
         << "  --syntax-check           Check syntax before formatting (exit 1 if errors found)\n"
+        << "  --syntax-fix             Auto-fix syntax issues (unclosed braces, environments, etc.)\n"
         << "\n"
         << "Formatting options:\n"
         << "  --indent-width=N         Set indentation width (default: 2)\n"
@@ -73,6 +75,7 @@ int main(int argc, char* argv[]) {
     bool recursive = false;
     bool md_mode = false;
     bool syntax_check = false;
+    bool syntax_fix = false;
     std::string output_path;
     std::string input_path;
     std::string config_file_path;
@@ -222,6 +225,10 @@ int main(int argc, char* argv[]) {
             syntax_check = true;
             continue;
         }
+        if (arg == "--syntax-fix") {
+            syntax_fix = true;
+            continue;
+        }
         if (arg.size() > 0 && arg[0] == '-') {
             std::cerr << "latex-fmt: error: unknown option '" << arg << "'\n";
             print_help(argv[0]);
@@ -255,7 +262,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto format_string = [&](const std::string& src, bool do_syntax_check = false)
+    auto format_string = [&](const std::string& src, bool do_syntax_check = false,
+                              bool do_syntax_fix = false)
         -> std::pair<std::string, std::vector<std::string>> {
         std::string source = src;
         if (md_mode) {
@@ -267,15 +275,32 @@ int main(int argc, char* argv[]) {
         latex_fmt::Parser par(lex.tokenize(), source, reg);
         auto doc = par.parse();
 
-        if (do_syntax_check) {
+        if (do_syntax_check || do_syntax_fix) {
             latex_fmt::SyntaxChecker checker(source, *doc);
             auto errors = checker.check();
-            for (const auto& e : errors) {
-                std::cerr << "line " << e.line << ":" << e.col
-                          << ": error: " << e.message << "\n";
-            }
+
             if (!errors.empty()) {
-                return {"", {}};
+                if (do_syntax_fix) {
+                    latex_fmt::SyntaxFixer fixer(source, *doc);
+                    source = fixer.apply();
+
+                    for (const auto& fix : fixer.getFixes()) {
+                        auto [line, col] = checker.getLineCol(fix.offset);
+                        std::cerr << "line " << line << ":" << col
+                                  << ": fixed: inserted '" << fix.text << "'\n";
+                    }
+
+                    latex_fmt::Lexer lex2(source, reg);
+                    auto tokens2 = lex2.tokenize();
+                    latex_fmt::Parser par2(std::move(tokens2), source, reg);
+                    doc = par2.parse();
+                } else {
+                    for (const auto& e : errors) {
+                        std::cerr << "line " << e.line << ":" << e.col
+                                  << ": error: " << e.message << "\n";
+                    }
+                    return {"", {}};
+                }
             }
         }
 
@@ -313,9 +338,15 @@ int main(int argc, char* argv[]) {
             }
             if (input.empty()) { total++; continue; }
 
-            auto [result, warnings] = format_string(input, syntax_check);
+            auto [result, warnings] = format_string(input, syntax_check, syntax_fix);
             if (syntax_check && result.empty() && warnings.empty()) {
                 std::cerr << f << ": syntax errors found\n";
+                changed++;
+                total++;
+                continue;
+            }
+            if (syntax_fix && result.empty() && warnings.empty()) {
+                std::cerr << f << ": syntax fix failed\n";
                 changed++;
                 total++;
                 continue;
@@ -402,9 +433,12 @@ int main(int argc, char* argv[]) {
 
     if (input.empty()) return 0;
 
-    auto [result, warnings] = format_string(input, syntax_check);
+    auto [result, warnings] = format_string(input, syntax_check, syntax_fix);
 
     if (syntax_check && result.empty() && warnings.empty()) {
+        return 1;
+    }
+    if (syntax_fix && result.empty() && warnings.empty()) {
         return 1;
     }
 
