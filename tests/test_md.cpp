@@ -303,6 +303,21 @@ TEST_CASE("Markdown: LaTeX math passthrough", "[md]") {
         REQUIRE(result.find("\\&") == std::string::npos);
         REQUIRE(result.find("\\_") == std::string::npos);
     }
+
+    SECTION("display math with $$ on same line as surrounding text") {
+        std::string result = convert("text $$a + b$$ more\n");
+        REQUIRE(result.find("$$a + b$$") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
+
+    SECTION("multi-line display math with text on $$ delimiters") {
+        std::string result = convert("公式$$\n\\begin{pmatrix}a+b & 0 \\\\\n0   & c+d\\end{pmatrix}\n$$测试\n");
+        REQUIRE(result.find("\\begin{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("a+b & 0") != std::string::npos);
+        REQUIRE(result.find("0   & c+d") != std::string::npos);
+        REQUIRE(result.find("\\end{pmatrix}") != std::string::npos);
+        REQUIRE(result.find("\\$") == std::string::npos);
+    }
 }
 
 TEST_CASE("Markdown: CLI --md flag", "[cli][md]") {

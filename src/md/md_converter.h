@@ -256,9 +256,9 @@ inline bool MdConverter::isCodeFence(const std::string& line) const {
 
 inline bool MdConverter::isDisplayMathFence(const std::string& line) const {
     std::string trimmed = ltrim(line);
-    if (trimmed.size() >= 2 && trimmed[0] == '$' && trimmed[1] == '$')
-        return true;
-    return false;
+    if (trimmed.size() < 2 || trimmed[0] != '$' || trimmed[1] != '$')
+        return false;
+    return trimmed.find_first_not_of(" \t", 2) == std::string::npos;
 }
 
 inline int MdConverter::detectHeading(const std::string& line,
