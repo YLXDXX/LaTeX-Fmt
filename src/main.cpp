@@ -51,6 +51,7 @@ static void print_help(const char* prog) {
         << "  --no-math-unify          Disable math delimiter unification\n"
         << "  --wrap                   Wrap long lines at word boundaries\n"
         << "  --wrap-paragraphs        Wrap paragraph text lines\n"
+        << "  --remove-tags            Remove \\tag{...} commands from formulas\n"
         << "  --md                     Treat input as Markdown, convert to LaTeX and format\n"
         << "  --config-file=<path>     Read config from file (default: .latexfmtrc)\n"
         << "\n"
@@ -203,6 +204,10 @@ int main(int argc, char* argv[]) {
         }
         if (arg == "--keep-trailing-spaces") {
             config.trailing_whitespace_remove = false;
+            continue;
+        }
+        if (arg == "--remove-tags") {
+            config.remove_tags = true;
             continue;
         }
         if (arg == "--remove-trailing-spaces") {

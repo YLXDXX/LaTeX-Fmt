@@ -622,3 +622,23 @@ TEST_CASE("CLI: --syntax-fix option", "[cli][syntax]") {
         std::filesystem::remove(f);
     }
 }
+
+TEST_CASE("CLI: --remove-tags", "[cli]") {
+    std::string f = tmp_path("rmtag.tex");
+    write_file(f, "\\begin{equation}\nE = mc^2 \\tag{1}\n\\end{equation}\n");
+
+    SECTION("removes \\tag when flag is set") {
+        auto r = run_cmd("--remove-tags " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\tag") == std::string::npos);
+        REQUIRE(r.output.find("E = mc^2") != std::string::npos);
+    }
+
+    SECTION("preserves \\tag without flag") {
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\tag{1}") != std::string::npos);
+    }
+
+    std::filesystem::remove(f);
+}

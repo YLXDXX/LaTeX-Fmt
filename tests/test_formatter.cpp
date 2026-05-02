@@ -1358,4 +1358,48 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Tag removal", "[formatting]") {
+        SECTION("remove \\tag{...} when enabled") {
+            FormatConfig cfg;
+            cfg.remove_tags = true;
+            auto result = format_code_config(
+                "\\begin{equation}\n"
+                "E = mc^2 \\tag{1}\n"
+                "\\end{equation}", cfg);
+            REQUIRE(result.find("\\tag") == std::string::npos);
+            REQUIRE(result.find("E = mc^2") != std::string::npos);
+        }
+
+        SECTION("remove \\tag*{...} when enabled") {
+            FormatConfig cfg;
+            cfg.remove_tags = true;
+            auto result = format_code_config(
+                "\\begin{equation}\n"
+                "E = mc^2 \\tag*{1}\n"
+                "\\end{equation}", cfg);
+            REQUIRE(result.find("\\tag") == std::string::npos);
+            REQUIRE(result.find("E = mc^2") != std::string::npos);
+        }
+
+        SECTION("preserve \\tag{...} by default") {
+            FormatConfig cfg;
+            auto result = format_code_config(
+                "\\begin{equation}\n"
+                "E = mc^2 \\tag{1}\n"
+                "\\end{equation}", cfg);
+            REQUIRE(result.find("\\tag{1}") != std::string::npos);
+        }
+
+        SECTION("remove \\tag in display math") {
+            FormatConfig cfg;
+            cfg.remove_tags = true;
+            auto result = format_code_config(
+                "$$\n"
+                "a + b = c \\tag{2}\n"
+                "$$", cfg);
+            REQUIRE(result.find("\\tag") == std::string::npos);
+            REQUIRE(result.find("a + b = c") != std::string::npos);
+        }
+    }
+
 } // namespace latex_fmt

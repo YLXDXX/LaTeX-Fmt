@@ -168,6 +168,10 @@ namespace latex_fmt {
                 return;
             }
 
+            if (config_.remove_tags && (n.name == "tag" || n.name == "tag*")) {
+                return;
+            }
+
             auto* sig = registry_.lookupCmd(n.name);
             if (!sig) {
                 flushPendingSpace();

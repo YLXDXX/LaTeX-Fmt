@@ -17,6 +17,7 @@ struct FormatConfig {
     bool math_delimiter_unify = true;
     bool wrap = false;
     bool wrap_paragraphs = false;
+    bool remove_tags = false;
 
     bool load_from_file(const std::string& path) {
         std::ifstream ifs(path);
@@ -54,6 +55,8 @@ struct FormatConfig {
                 wrap = parse_bool(value, false);
             } else if (key == "wrap_paragraphs") {
                 wrap_paragraphs = parse_bool(value, false);
+            } else if (key == "remove_tags") {
+                remove_tags = parse_bool(value, false);
             }
         }
         return true;
