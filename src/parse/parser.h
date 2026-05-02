@@ -270,6 +270,12 @@ namespace latex_fmt {
                     group->children.push_back(parseParBreak());
                 } else if (peek().type == TokenType::Newline) {
                     group->children.push_back(parseNewline());
+                } else if (peek().type == TokenType::OpenBrace && open == TokenType::OpenBracket) {
+                    auto inner = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace);
+                    group->children.push_back(std::move(inner));
+                } else if (peek().type == TokenType::OpenBracket && open == TokenType::OpenBrace) {
+                    auto inner = parseGroup(TokenType::OpenBracket, TokenType::CloseBracket);
+                    group->children.push_back(std::move(inner));
                 } else if (peek().type == TokenType::InlineMathStart) {
                     group->children.push_back(parseInlineMath(ParseContext::Text));
                 } else if (peek().type == TokenType::DisplayMathStart) {

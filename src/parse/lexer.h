@@ -211,10 +211,12 @@ namespace latex_fmt {
 
                 if (peek() == '{') {
                     consume();
+                    skipWhitespace();
                     std::string env_name;
-                    while (pos_ < input_.size() && input_[pos_] != '}') {
+                    while (pos_ < input_.size() && (isalpha(input_[pos_]) || input_[pos_] == '*')) {
                         env_name += consume();
                     }
+                    skipWhitespace();
                     if (peek() == '}') consume();
 
                     TokenType tt = (cmd == "begin") ? TokenType::BeginEnv : TokenType::EndEnv;
@@ -228,6 +230,13 @@ namespace latex_fmt {
                         }
                     }
                     return tok;
+                } else if (isalpha(peek())) {
+                    std::string env_name;
+                    while (pos_ < input_.size() && (isalpha(input_[pos_]) || input_[pos_] == '*')) {
+                        env_name += consume();
+                    }
+                    TokenType tt = (cmd == "begin") ? TokenType::BeginEnv : TokenType::EndEnv;
+                    return {tt, env_name, {start, pos_}};
                 } else {
                     pos_ = saved_pos;
                 }

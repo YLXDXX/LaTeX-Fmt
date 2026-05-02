@@ -173,7 +173,7 @@ TEST_CASE("Lexer: environment begin/end", "[lexer]") {
     SECTION("Environment with spaces before brace") {
         auto tokens = tokenize("\\begin{  equation  }");
         REQUIRE(tokens[0].type == TokenType::BeginEnv);
-        REQUIRE(tokens[0].value == "  equation  ");
+        REQUIRE(tokens[0].value == "equation");
     }
 }
 

@@ -73,7 +73,16 @@ namespace latex_fmt {
                     if (child) walk(*child);
                 }
                 if (group->is_malformed) {
-                    fixes_.push_back({group->source.end_offset, group->delim_close});
+                    size_t fix_offset = group->source.end_offset;
+                    for (const auto& child : group->children) {
+                        if (auto* inner = dynamic_cast<const Group*>(child.get())) {
+                            if (inner->delim_open != group->delim_open && !inner->is_malformed) {
+                                fix_offset = inner->source.begin_offset;
+                                break;
+                            }
+                        }
+                    }
+                    fixes_.push_back({fix_offset, group->delim_close});
                 }
             } else if (auto* cmd = dynamic_cast<const Command*>(&node)) {
                 for (const auto& arg : cmd->args) {
