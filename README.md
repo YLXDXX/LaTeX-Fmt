@@ -444,6 +444,7 @@ ctest
 | `\onslide` | `{1}` | 叠层可见范围 |
 | `\only` `\uncover` `\visible` `\invisible` | `{2}` | 叠层条件显示 |
 | `\pause` `\titlepage` | — | 暂停/标题页 |
+| `\insertsectionhead` `\insertsubsectionhead` | — | 插入当前节/子节标题 |
 
 #### 表格分隔线
 
@@ -467,6 +468,10 @@ ctest
 #### 原样输出
 
 `verbatim` `lstlisting` `minted` — 内容不做格式化处理。
+
+##### 内联原样输出
+
+`\verb|...|` 和 `\verb*|...|` — 内联逐字命令，内容原样保留不做任何格式化处理。`\verb*` 将空格显示为可见字符。分隔符可选用除 `*` 外的任意非字母字符（如 `|`、`!`、`+` 等）。
 
 #### 表格环境
 
