@@ -205,7 +205,7 @@ namespace latex_fmt {
                     visitNode(*arg);
                 }
                 if (n.args.empty()) {
-                    endOutput(CharCategory::ASCII);
+                    endOutput(CharCategory::Other);
                 }
                 return;
             }
@@ -231,7 +231,7 @@ namespace latex_fmt {
                         visitNode(*child);
                     }
                     output_ << g->delim_close;
-                    endOutput(CharCategory::ASCII);
+                    endOutput(CharCategory::Other);
                 } else if (auto* t = dynamic_cast<const Text*>(arg.get())) {
                     bool do_brace = config_.brace_completion
                         && t->content.size() == 1
@@ -263,7 +263,7 @@ namespace latex_fmt {
 
             output_ << n.delim_open;
             line_pos_ += static_cast<int>(n.delim_open.size());
-            endOutput(CharCategory::ASCII);
+            endOutput(CharCategory::Other);
 
             for (const auto& child : n.children) {
                 visitNode(*child);
@@ -271,7 +271,7 @@ namespace latex_fmt {
 
             output_ << n.delim_close;
             line_pos_ += static_cast<int>(n.delim_close.size());
-            endOutput(CharCategory::ASCII);
+            endOutput(CharCategory::Other);
         }
 
         void visit(const Text& n) {

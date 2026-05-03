@@ -1022,6 +1022,15 @@ namespace latex_fmt {
             auto result = format_code("令$x\\in\\mathbb{R}$满足条件");
             REQUIRE_FALSE(result.empty());
         }
+
+        SECTION("CJK after command group delimiters has no false spacing") {
+            REQUIRE(format_code("单位向量\\cprotect\\footnote{注意}可以表示为") ==
+                    "单位向量\\cprotect\\footnote{注意}可以表示为");
+            REQUIRE(format_code("中文\\textbf{中文}中文") ==
+                    "中文\\textbf{中文}中文");
+            REQUIRE(format_code("前置{内容}后置") ==
+                    "前置{内容}后置");
+        }
     }
 
     std::vector<std::string> check_syntax(const std::string& input) {
