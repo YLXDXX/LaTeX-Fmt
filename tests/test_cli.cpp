@@ -642,3 +642,56 @@ TEST_CASE("CLI: --remove-tags", "[cli]") {
 
     std::filesystem::remove(f);
 }
+
+TEST_CASE("CLI: --display-math-style", "[cli]") {
+    std::string f;
+    {
+        std::ofstream ofs("/tmp/.test-latex-fmt-dms.tex");
+        ofs << "\\[\nx\n\\]\n$$y$$";
+        f = "/tmp/.test-latex-fmt-dms.tex";
+    }
+
+    SECTION("default is dollar style") {
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("$$") != std::string::npos);
+    }
+
+    SECTION("bracket style") {
+        auto r = run_cmd("--display-math-style=bracket " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\[") != std::string::npos);
+        REQUIRE(r.output.find("\\]") != std::string::npos);
+        REQUIRE(r.output.find("$$") == std::string::npos);
+    }
+
+    SECTION("equation style") {
+        auto r = run_cmd("--display-math-style=equation " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\begin{equation}") != std::string::npos);
+        REQUIRE(r.output.find("\\end{equation}") != std::string::npos);
+        REQUIRE(r.output.find("equation*") == std::string::npos);
+    }
+
+    SECTION("equation* style") {
+        auto r = run_cmd("--display-math-style=equation* " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\begin{equation*}") != std::string::npos);
+        REQUIRE(r.output.find("\\end{equation*}") != std::string::npos);
+    }
+
+    SECTION("invalid style returns error") {
+        auto r = run_cmd("--display-math-style=invalid " + f);
+        REQUIRE(r.exit_code != 0);
+    }
+
+    SECTION("no-unify preserves original") {
+        auto r = run_cmd("--no-math-unify --display-math-style=equation " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\[") != std::string::npos);
+        REQUIRE(r.output.find("$$") != std::string::npos);
+        REQUIRE(r.output.find("\\begin{equation}") == std::string::npos);
+    }
+
+    std::filesystem::remove(f);
+}

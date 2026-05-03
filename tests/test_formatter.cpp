@@ -539,6 +539,43 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Display math: configurable style", "[formatter][display_math]") {
+        SECTION("dollar style (default)") {
+            FormatConfig cfg;
+            cfg.display_math_style = latex_fmt::DisplayMathStyle::Dollar;
+            REQUIRE(format_code_config("\\[x\\]", cfg) == "$$\n  x\n$$\n");
+        }
+
+        SECTION("bracket style") {
+            FormatConfig cfg;
+            cfg.display_math_style = latex_fmt::DisplayMathStyle::Bracket;
+            REQUIRE(format_code_config("\\[x\\]", cfg) == "\\[\n  x\n\\]\n");
+            REQUIRE(format_code_config("$$x$$", cfg) == "\\[\n  x\n\\]\n");
+        }
+
+        SECTION("equation style") {
+            FormatConfig cfg;
+            cfg.display_math_style = latex_fmt::DisplayMathStyle::Equation;
+            REQUIRE(format_code_config("\\[x\\]", cfg) == "\\begin{equation}\n  x\n\\end{equation}\n");
+            REQUIRE(format_code_config("$$x$$", cfg) == "\\begin{equation}\n  x\n\\end{equation}\n");
+        }
+
+        SECTION("equation* style") {
+            FormatConfig cfg;
+            cfg.display_math_style = latex_fmt::DisplayMathStyle::EquationStar;
+            REQUIRE(format_code_config("\\[x\\]", cfg) == "\\begin{equation*}\n  x\n\\end{equation*}\n");
+            REQUIRE(format_code_config("$$x$$", cfg) == "\\begin{equation*}\n  x\n\\end{equation*}\n");
+        }
+
+        SECTION("no-unify preserves original delimiters") {
+            FormatConfig cfg;
+            cfg.math_delimiter_unify = false;
+            cfg.display_math_style = latex_fmt::DisplayMathStyle::Bracket;
+            REQUIRE(format_code_config("$$x$$", cfg) == "$$\n  x\n$$\n");
+            REQUIRE(format_code_config("\\[x\\]", cfg) == "\\[\n  x\n\\]\n");
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  Verbatim 保留
     // ═══════════════════════════════════════════════════════════

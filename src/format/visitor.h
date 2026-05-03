@@ -474,16 +474,30 @@ namespace latex_fmt {
         void visit(const DisplayMath& n) {
             flushPendingSpace();
 
-            bool use_dollar = config_.math_delimiter_unify || n.is_dollar_form;
+            bool use_unify = config_.math_delimiter_unify;
+            auto style = config_.display_math_style;
+
+            std::string delim_open, delim_close;
+            if (!use_unify) {
+                delim_open = n.is_dollar_form ? "$$" : "\\[";
+                delim_close = n.is_dollar_form ? "$$" : "\\]";
+            } else {
+                switch (style) {
+                    case DisplayMathStyle::Bracket:
+                        delim_open = "\\["; delim_close = "\\]"; break;
+                    case DisplayMathStyle::Equation:
+                        delim_open = "\\begin{equation}"; delim_close = "\\end{equation}"; break;
+                    case DisplayMathStyle::EquationStar:
+                        delim_open = "\\begin{equation*}"; delim_close = "\\end{equation*}"; break;
+                    default:
+                        delim_open = "$$"; delim_close = "$$"; break;
+                }
+            }
 
             if (config_.display_math_format) {
                 ensureNewline();
             }
-            if (use_dollar) {
-                output_ << "$$";
-            } else {
-                output_ << "\\[";
-            }
+            output_ << delim_open;
             at_line_start_ = false;
 
             if (config_.display_math_format) {
@@ -501,11 +515,7 @@ namespace latex_fmt {
                 ensureNewline();
             }
 
-            if (use_dollar) {
-                output_ << "$$";
-            } else {
-                output_ << "\\]";
-            }
+            output_ << delim_close;
             at_line_start_ = false;
 
             if (config_.display_math_format) {
