@@ -631,7 +631,7 @@ TEST_CASE("CLI: --remove-tags", "[cli]") {
         auto r = run_cmd("--remove-tags " + f);
         REQUIRE(r.exit_code == 0);
         REQUIRE(r.output.find("\\tag") == std::string::npos);
-        REQUIRE(r.output.find("E = mc^2") != std::string::npos);
+        REQUIRE(r.output.find("E = mc^{2}") != std::string::npos);
     }
 
     SECTION("preserves \\tag without flag") {

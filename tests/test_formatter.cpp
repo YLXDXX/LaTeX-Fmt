@@ -167,11 +167,11 @@ namespace latex_fmt {
         }
 
         SECTION("Display math delimiter \\[\\] to $$$$") {
-            REQUIRE(format_code("\\[E = mc^2\\]") == "$$\n  E = mc^2\n$$\n");
+            REQUIRE(format_code("\\[E = mc^2\\]") == "$$\n  E = mc^{2}\n$$\n");
         }
 
         SECTION("Display math with space") {
-            REQUIRE(format_code("\\[ E = mc^2 \\]") == "$$\n  E = mc^2\n$$\n");
+            REQUIRE(format_code("\\[ E = mc^2 \\]") == "$$\n  E = mc^{2}\n$$\n");
         }
     }
 
@@ -240,6 +240,53 @@ namespace latex_fmt {
 
         SECTION("frac and sqrt together in math") {
             REQUIRE(format_code("$\\frac12 + \\sqrt3$") == "$\\frac{1}{2} + \\sqrt{3}$");
+        }
+    }
+
+    TEST_CASE("R2: subscript/superscript brace completion", "[formatter][R2]") {
+        SECTION("simple subscript") {
+            REQUIRE(format_code("$x_a$") == "$x_{a}$");
+        }
+
+        SECTION("simple superscript") {
+            REQUIRE(format_code("$x^2$") == "$x^{2}$");
+        }
+
+        SECTION("multiple in one expression") {
+            REQUIRE(format_code("$x_a + y_b + z_c$") == "$x_{a} + y_{b} + z_{c}$");
+            REQUIRE(format_code("$x_a^2$") == "$x_{a}^{2}$");
+        }
+
+        SECTION("subscript with command argument") {
+            REQUIRE(format_code("$x_\\alpha$") == "$x_{\\alpha}$");
+            REQUIRE(format_code("$x^\\beta$") == "$x^{\\beta}$");
+        }
+
+        SECTION("both subscript and superscript") {
+            REQUIRE(format_code("$^3_2A$") == "$^{3}_{2}A$");
+            REQUIRE(format_code("$^3_2A_\\alpha^\\beta$") == "$^{3}_{2}A_{\\alpha}^{\\beta}$");
+        }
+
+        SECTION("command with sub/superscript") {
+            REQUIRE(format_code("$^4_2\\mathrm{He}$") == "$^{4}_{2}\\mathrm{He}$");
+        }
+
+        SECTION("already braced preserved") {
+            REQUIRE(format_code("$x_{a}$") == "$x_{a}$");
+            REQUIRE(format_code("$x^{2}$") == "$x^{2}$");
+            REQUIRE(format_code("$x_{ab}$") == "$x_{ab}$");
+            REQUIRE(format_code("$x^{ab}$") == "$x^{ab}$");
+        }
+
+        SECTION("text mode not affected") {
+            REQUIRE(format_code("a_b") == "a_b");
+            REQUIRE(format_code("x^2") == "x^2");
+        }
+
+        SECTION("real-world vector example") {
+            REQUIRE(format_code(
+                "$\\vec{a}=(x_a, y_a, z_a)$ and $\\vec{b}=(x_b, y_b, z_b)$") ==
+                "$\\vec{a}=(x_{a}, y_{a}, z_{a})$ and $\\vec{b}=(x_{b}, y_{b}, z_{b})$");
         }
     }
 
@@ -353,7 +400,7 @@ namespace latex_fmt {
 
         SECTION("Equation environment") {
             REQUIRE(format_code("\\begin{equation}\nE = mc^2\n\\end{equation}") ==
-            "\\begin{equation}\n  E = mc^2\n\\end{equation}");
+            "\\begin{equation}\n  E = mc^{2}\n\\end{equation}");
         }
 
         SECTION("Document environment no extra indent") {
@@ -411,7 +458,7 @@ namespace latex_fmt {
             REQUIRE(format_code(
                 "\\begin{equation}\nE = mc^2 % energy\n\\end{equation}"
             ) ==
-            "\\begin{equation}\n  E = mc^2 % energy\n\\end{equation}");
+            "\\begin{equation}\n  E = mc^{2} % energy\n\\end{equation}");
         }
     }
 
@@ -478,12 +525,12 @@ namespace latex_fmt {
     TEST_CASE("Display math: standalone lines", "[formatter][display_math]") {
         SECTION("Inline $$ wrapped to separate lines") {
             REQUIRE(format_code("text $$E=mc^2$$ more") ==
-            "text\n$$\n  E=mc^2\n$$\nmore");
+            "text\n$$\n  E=mc^{2}\n$$\nmore");
         }
 
         SECTION("$$ already on own line") {
             REQUIRE(format_code("$$\nE=mc^2\n$$") ==
-            "$$\n  E=mc^2\n$$\n");
+            "$$\n  E=mc^{2}\n$$\n");
         }
 
         SECTION("CJK before display math") {
@@ -1440,7 +1487,7 @@ namespace latex_fmt {
                 "E = mc^2 \\tag{1}\n"
                 "\\end{equation}", cfg);
             REQUIRE(result.find("\\tag") == std::string::npos);
-            REQUIRE(result.find("E = mc^2") != std::string::npos);
+            REQUIRE(result.find("E = mc^{2}") != std::string::npos);
         }
 
         SECTION("remove \\tag*{...} when enabled") {
@@ -1451,7 +1498,7 @@ namespace latex_fmt {
                 "E = mc^2 \\tag*{1}\n"
                 "\\end{equation}", cfg);
             REQUIRE(result.find("\\tag") == std::string::npos);
-            REQUIRE(result.find("E = mc^2") != std::string::npos);
+            REQUIRE(result.find("E = mc^{2}") != std::string::npos);
         }
 
         SECTION("preserve \\tag{...} by default") {
@@ -1575,7 +1622,7 @@ namespace latex_fmt {
                 "$$\n"
                 "\\delta^{[a_1}_{a_1}\n"
                 "$$");
-            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{[a_{1}}_{a_{1}}") != std::string::npos);
         }
 
         SECTION("display math with unmatched brackets in formula") {
@@ -1583,8 +1630,8 @@ namespace latex_fmt {
                 "$$\n"
                 "\\delta^{[a_1}_{a_1} \\cdots \\delta^{a_n]}_{b_n}\n"
                 "$$");
-            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
-            REQUIRE(result.find("\\delta^{a_n]}_{b_n}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{[a_{1}}_{a_{1}}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_{n}]}_{b_{n}}") != std::string::npos);
         }
 
         SECTION("tensor notation formula from bug report") {
@@ -1594,10 +1641,10 @@ namespace latex_fmt {
                 " = \\frac{(n-j)! j!}{n!}"
                 " \\delta^{[a_{j+1}}_{b_{j+1}} \\cdots \\delta^{a_n]}_{b_n}.\n"
                 "$$");
-            REQUIRE(result.find("\\delta^{[a_1}_{a_1}") != std::string::npos);
-            REQUIRE(result.find("\\delta^{a_n]}_{\\phantom{[}b_n}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{[a_{1}}_{a_{1}}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_{n}]}_{\\phantom{[}b_{n}}") != std::string::npos);
             REQUIRE(result.find("\\delta^{[a_{j+1}}_{b_{j+1}}") != std::string::npos);
-            REQUIRE(result.find("\\delta^{a_n]}_{b_n}") != std::string::npos);
+            REQUIRE(result.find("\\delta^{a_{n}]}_{b_{n}}") != std::string::npos);
         }
 
         SECTION("inline math with bracket chars") {

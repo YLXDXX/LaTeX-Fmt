@@ -332,6 +332,44 @@ namespace latex_fmt {
                 }
             } else {
                 flushPendingSpace();
+                if (config_.brace_completion) {
+                    std::string processed;
+                    size_t i = 0;
+                    while (i < content.size()) {
+                        unsigned char c = static_cast<unsigned char>(content[i]);
+                        if (c == '_' || c == '^') {
+                            processed += c;
+                            i++;
+
+                            if (i >= content.size()) {
+                                pending_sub_super_brace_ = true;
+                                continue;
+                            }
+
+                            if (content[i] == '{') {
+                                processed += content.substr(i);
+                                break;
+                            }
+
+                            if (content[i] == ' ' || content[i] == '\t') {
+                                continue;
+                            }
+
+                            size_t cp_start = i;
+                            uint32_t cp = decode_utf8(content, i);
+                            if (cp != UTF8_EOF) {
+                                processed += '{';
+                                processed += content.substr(cp_start, i - cp_start);
+                                processed += '}';
+                            }
+                        } else {
+                            processed += c;
+                            i++;
+                        }
+                    }
+                    content = processed;
+                }
+
                 if (at_line_start_) {
                     size_t first_non_space = content.find_first_not_of(" \t");
                     if (first_non_space != std::string::npos) {
@@ -424,6 +462,7 @@ namespace latex_fmt {
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
+            pending_sub_super_brace_ = false;
             if (use_dollar) {
                 writeText("$");
             } else {
@@ -455,6 +494,7 @@ namespace latex_fmt {
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
+            pending_sub_super_brace_ = false;
 
             if (config_.display_math_format) {
                 indent_level_--;
@@ -482,6 +522,15 @@ namespace latex_fmt {
                 return;
             }
 
+            bool sub_super_wrap = pending_sub_super_brace_;
+            if (sub_super_wrap) {
+                pending_sub_super_brace_ = false;
+                if (dynamic_cast<const Group*>(&n)) {
+                    sub_super_wrap = false;
+                }
+            }
+            if (sub_super_wrap) output_ << '{';
+
             if (auto* p = dynamic_cast<const Document*>(&n)) visit(*p);
             else if (auto* p = dynamic_cast<const Environment*>(&n)) visit(*p);
             else if (auto* p = dynamic_cast<const Command*>(&n)) visit(*p);
@@ -492,6 +541,8 @@ namespace latex_fmt {
             else if (auto* p = dynamic_cast<const Newline*>(&n)) visit(*p);
             else if (auto* p = dynamic_cast<const InlineMath*>(&n)) visit(*p);
             else if (auto* p = dynamic_cast<const DisplayMath*>(&n)) visit(*p);
+
+            if (sub_super_wrap) output_ << '}';
         }
 
         std::string extractOutput() const {
@@ -520,6 +571,7 @@ namespace latex_fmt {
         std::string_view source_;
         CharCategory last_char_cat_ = CharCategory::None;
         bool pending_space_ = false;
+        bool pending_sub_super_brace_ = false;
         bool output_ends_space_ = false;
         int line_pos_ = 0;
         int line_number_ = 1;

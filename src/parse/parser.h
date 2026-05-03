@@ -55,7 +55,7 @@ namespace latex_fmt {
                     return node;
                 }
                 case TokenType::OpenBrace: {
-                    auto node = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace);
+                    auto node = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace, ctx);
                     node->context = ctx;
                     return node;
                 }
@@ -208,7 +208,7 @@ namespace latex_fmt {
                         advance();
                         cmd->args.push_back(std::move(node));
                     } else {
-                        cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace));
+                        cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace, ctx));
                     }
                 }
             if (!cmd->args.empty()) {
@@ -234,7 +234,7 @@ namespace latex_fmt {
                 size_t saved = pos_;
                 skipWhitespace();
                 if (peek().type == TokenType::OpenBracket) {
-                    cmd->args.push_back(parseGroup(TokenType::OpenBracket, TokenType::CloseBracket));
+                    cmd->args.push_back(parseGroup(TokenType::OpenBracket, TokenType::CloseBracket, ctx));
                 } else {
                     pos_ = saved;
                 }
@@ -243,7 +243,7 @@ namespace latex_fmt {
             for (int i = 0; i < sig->mandatory_args; ++i) {
                 skipWhitespace();
                 if (peek().type == TokenType::OpenBrace) {
-                    cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace));
+                    cmd->args.push_back(parseGroup(TokenType::OpenBrace, TokenType::CloseBrace, ctx));
                 } else if (sig->mandatory_braces && peek().type == TokenType::Text && !peek().value.empty() && !tokens_[pos_].value.empty()) {
                     auto arg_node = std::make_unique<Text>();
                     arg_node->source.begin_offset = tokens_[pos_].source.begin_offset;
@@ -273,7 +273,7 @@ namespace latex_fmt {
             return cmd;
         }
 
-        std::unique_ptr<Group> parseGroup(TokenType open, TokenType close) {
+        std::unique_ptr<Group> parseGroup(TokenType open, TokenType close, ParseContext ctx = ParseContext::Text) {
             auto group = std::make_unique<Group>();
             group->source.begin_offset = peek().source.begin_offset;
             group->delim_open = (open == TokenType::OpenBrace) ? "{" : "[";
@@ -284,7 +284,7 @@ namespace latex_fmt {
 
             while (peek().type != TokenType::Eof && depth > 0) {
                 if (peek().type == open) {
-                    auto inner = parseGroup(open, close);
+                    auto inner = parseGroup(open, close, ctx);
                     group->children.push_back(std::move(inner));
                 } else if (peek().type == close) {
                     depth--;
@@ -294,7 +294,7 @@ namespace latex_fmt {
                         break;
                     }
                 } else if (peek().type == TokenType::Command) {
-                    auto cmd = parseCommand(ParseContext::Text);
+                    auto cmd = parseCommand(ctx);
                     group->children.push_back(std::move(cmd));
                 } else if (peek().type == TokenType::Comment) {
                     group->children.push_back(parseComment());
@@ -303,14 +303,15 @@ namespace latex_fmt {
                 } else if (peek().type == TokenType::Newline) {
                     group->children.push_back(parseNewline());
                 } else if (peek().type == TokenType::OpenBrace && open == TokenType::OpenBracket) {
-                    auto inner = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace);
+                    auto inner = parseGroup(TokenType::OpenBrace, TokenType::CloseBrace, ctx);
                     group->children.push_back(std::move(inner));
                 } else if (peek().type == TokenType::InlineMathStart) {
-                    group->children.push_back(parseInlineMath(ParseContext::Text));
+                    group->children.push_back(parseInlineMath(ctx));
                 } else if (peek().type == TokenType::DisplayMathStart) {
-                    group->children.push_back(parseDisplayMath(ParseContext::Text));
+                    group->children.push_back(parseDisplayMath(ctx));
                 } else {
                     auto txt = parseTextOrVerb();
+                    txt->context = ctx;
                     group->children.push_back(std::move(txt));
                 }
             }
