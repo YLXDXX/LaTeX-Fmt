@@ -58,8 +58,8 @@ latex-fmt --md < input.md > output.tex
 
 | 规则 | 说明 |
 |------|------|
-| 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$` |
-| 花括号补全 | `\frac12` → `\frac{1}{2}`、`\sqrt3` → `\sqrt{3}`（仅限已知命令） |
+| 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$`（行间公式样式可通过 `--display-math-style` 配置） |
+| 花括号补全 | `\frac12` → `\frac{1}{2}`、`\sqrt3` → `\sqrt{3}`（仅限已知命令）；数学模式上下标简写 `x_a` → `x_{a}`、`x^2` → `x^{2}` |
 | 去冗余空白 | 文本模式多个空格压缩为 1 个；数学模式保留空格 |
 | 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
 | 表格与公式对齐 | 表格（`tabular`/`tblr` 等）和数学环境（`align`/`matrix`/`cases`）中按 `&` 纵向对齐单元格，`\hline` 等分隔线独立成行 |
@@ -67,7 +67,7 @@ latex-fmt --md < input.md > output.tex
 | 注释规范化 | `%comment` → `% comment` |
 | 行尾空格清除 | 每行末尾空格全部删除 |
 | 空白行处理 | 纯空白行变为空行；连续多空行压缩为 1 个 |
-| 行间公式独立 | `$$...$$` 自动独立成行并缩进 |
+| 行间公式独立 | `$$...$$` 自动独立成行并缩进（输出样式可通过 `--display-math-style` 切换为 `\[...\]` / `\begin{equation}` / `\begin{equation*}`） |
 | 错误恢复 | 不匹配的花括号、缺失 `\end` 时不会崩溃，尽力恢复 |
 | 方括号智能处理 | 数学模式中 `[`/`]` 视为普通字符；仅在命令/环境可选参数位置检查配对 |
 | 长行警告与自动换行 | `--max-line-width=N` 警告超长行；`--wrap` / `--wrap-paragraphs` 自动折行 |
@@ -89,6 +89,7 @@ latex-fmt --md < input.md > output.tex
 | `--keep-trailing-spaces` / `--remove-trailing-spaces` | 删除 | 是否保留行尾空格 |
 | `--no-display-math-format` / `--display-math-format` | 开启 | `$$...$$` 独立成行 |
 | `--no-math-unify` / `--math-unify` | 开启 | 数学定界符统一为 `$` / `$$` |
+| `--display-math-style=S` | `dollar` | 行间公式输出样式：`dollar`（`$$`）、`bracket`（`\[`）、`equation`、`equation*` |
 | `--max-line-width=N` | 0（关闭） | 当 N > 0 时，超长行触发警告 |
 | `--wrap` | 关闭 | 配合 `--max-line-width` 自动折行 |
 | `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行 |
@@ -120,6 +121,9 @@ latex-fmt --no-cjk-spacing paper.tex
 
 # 长行自动折行（行宽 80）
 latex-fmt --max-line-width=80 --wrap-paragraphs paper.tex
+
+# 行间公式输出为 \begin{equation}...\end{equation}
+latex-fmt --display-math-style=equation paper.tex
 
 # 组合多项参数
 latex-fmt --indent-width=4 --no-cjk-spacing --quiet paper.tex
@@ -245,6 +249,9 @@ wrap_paragraphs = true
 # 布尔值支持: true / false / 1 / 0 / yes / no / on / off
 brace_completion = true
 comment_normalize = true
+
+# 行间公式输出样式: dollar / bracket / equation / equation*
+display_math_style = bracket
 ```
 
 ## 项目结构
