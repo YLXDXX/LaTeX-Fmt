@@ -576,6 +576,54 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Environment: bracket group and comment formatting", "[formatter][edge]") {
+        SECTION("closing bracket indented inside environment") {
+            auto result = format_code(
+                "\\begin{figure}[htbp]\n"
+                "  \\begin{tikzpicture}[\n"
+                "  scale=1.2\n"
+                "]\n"
+                "  \\end{tikzpicture}\n"
+                "\\end{figure}\n");
+            REQUIRE(result.find("  ]") != std::string::npos);
+        }
+
+        SECTION("comment after bracket stays on own line") {
+            auto result = format_code(
+                "\\begin{figure}[htbp]\n"
+                "  \\begin{tikzpicture}[\n"
+                "  scale=1.2\n"
+                "]\n"
+                "% a standalone comment\n"
+                "  \\end{tikzpicture}\n"
+                "\\end{figure}\n");
+            REQUIRE(result.find("% a standalone comment") != std::string::npos);
+            REQUIRE(result.find("]%") == std::string::npos);
+        }
+
+        SECTION("caption on its own line") {
+            auto result = format_code(
+                "\\begin{figure}[htbp]\n"
+                "  \\centering\n"
+                "  \\includegraphics{img.png}\n"
+                "  \\caption{Test}\n"
+                "\\end{figure}\n");
+            REQUIRE(result.find("\\caption{Test}") != std::string::npos);
+        }
+
+        SECTION("caption after end{tikzpicture} on own line") {
+            auto result = format_code(
+                "\\begin{figure}[htbp]\n"
+                "\\centering\n"
+                "  \\begin{tikzpicture}[\n"
+                "  scale=1.2\n"
+                "]\n"
+                "  \\end{tikzpicture}\\caption{Test}\n"
+                "\\end{figure}\n");
+            REQUIRE(result.find("\\end{tikzpicture}\n") != std::string::npos);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  Verbatim 保留
     // ═══════════════════════════════════════════════════════════

@@ -197,6 +197,12 @@ namespace latex_fmt {
                 return;
             }
 
+            if (n.name == "caption" || n.name == "subcaption") {
+                if (!at_line_start_) {
+                    ensureNewline();
+                }
+            }
+
             auto* sig = registry_.lookupCmd(n.name);
             if (!sig) {
                 flushPendingSpace();
@@ -261,6 +267,12 @@ namespace latex_fmt {
                 return;
             }
 
+            flushPendingSpace();
+            if (at_line_start_) {
+                output_ << getIndent();
+                at_line_start_ = false;
+                line_pos_ = indent_level_ * config_.indent_width;
+            }
             output_ << n.delim_open;
             line_pos_ += static_cast<int>(n.delim_open.size());
             endOutput(CharCategory::Other);
@@ -269,6 +281,12 @@ namespace latex_fmt {
                 visitNode(*child);
             }
 
+            flushPendingSpace();
+            if (at_line_start_) {
+                output_ << getIndent();
+                at_line_start_ = false;
+                line_pos_ = indent_level_ * config_.indent_width;
+            }
             output_ << n.delim_close;
             line_pos_ += static_cast<int>(n.delim_close.size());
             endOutput(CharCategory::Other);
