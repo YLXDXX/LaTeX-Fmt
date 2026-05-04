@@ -88,9 +88,9 @@ latex-fmt --md < input.md > output.tex
 | `--no-blank-line-compress` / `--blank-line-compress` | 开启 | 连续多空行压缩为 1 个 |
 | `--keep-trailing-spaces` / `--remove-trailing-spaces` | 删除 | 是否保留行尾空格 |
 | `--no-display-math-format` / `--display-math-format` | 开启 | `$$...$$` 独立成行 |
-| `--no-math-unify` / `--math-unify` | 开启 | 数学定界符统一为 `$` / `$$` |
-| `--display-math-style=S` | `dollar` | 行间公式输出样式：`dollar`（`$$`）、`bracket`（`\[`）、`equation`、`equation*` |
-| `--inline-math-style=S` | `dollar` | 行内公式输出样式：`dollar`（`$`）、`bracket`（`\(`） |
+| `--no-math-unify` / `--math-unify` | 开启 | 是否统一数学公式的定界符 |
+| `--display-math-style=S` | `dollar` | 行间公式输出样式：`dollar`（`$$...$$`）、`bracket`（`\[...\]`）、`equation`、`equation*` |
+| `--inline-math-style=S` | `dollar` | 行内公式输出样式：`dollar`（`$...$`）、`bracket`（`\(...\)`） |
 | `--max-line-width=N` | 0（关闭） | 当 N > 0 时，超长行触发警告 |
 | `--wrap` | 关闭 | 配合 `--max-line-width` 自动折行 |
 | `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行 |
