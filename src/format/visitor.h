@@ -359,6 +359,10 @@ namespace latex_fmt {
                             processed += c;
                             i++;
 
+                            while (i < content.size() && (content[i] == ' ' || content[i] == '\t')) {
+                                i++;
+                            }
+
                             if (i >= content.size()) {
                                 pending_sub_super_brace_ = true;
                                 continue;
@@ -367,10 +371,6 @@ namespace latex_fmt {
                             if (content[i] == '{') {
                                 processed += content.substr(i);
                                 break;
-                            }
-
-                            if (content[i] == ' ' || content[i] == '\t') {
-                                continue;
                             }
 
                             size_t cp_start = i;
@@ -552,9 +552,21 @@ namespace latex_fmt {
 
             bool sub_super_wrap = pending_sub_super_brace_;
             if (sub_super_wrap) {
-                pending_sub_super_brace_ = false;
                 if (dynamic_cast<const Group*>(&n)) {
+                    pending_sub_super_brace_ = false;
                     sub_super_wrap = false;
+                } else if (auto* t = dynamic_cast<const Text*>(&n)) {
+                    bool all_space = true;
+                    for (char ch : t->content) {
+                        if (ch != ' ' && ch != '\t') { all_space = false; break; }
+                    }
+                    if (all_space) {
+                        pending_sub_super_brace_ = true;
+                        return;
+                    }
+                    pending_sub_super_brace_ = false;
+                } else {
+                    pending_sub_super_brace_ = false;
                 }
             }
             if (sub_super_wrap) output_ << '{';

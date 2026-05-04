@@ -288,6 +288,17 @@ namespace latex_fmt {
                 "$\\vec{a}=(x_a, y_a, z_a)$ and $\\vec{b}=(x_b, y_b, z_b)$") ==
                 "$\\vec{a}=(x_{a}, y_{a}, z_{a})$ and $\\vec{b}=(x_{b}, y_{b}, z_{b})$");
         }
+
+        SECTION("whitespace between caret and argument handled correctly") {
+            REQUIRE(format_code("$x^ 2$") == "$x^{2}$");
+            REQUIRE(format_code("$x ^ {2}$") == "$x ^{2}$");
+            REQUIRE(format_code("$x_ 2$") == "$x_{2}$");
+            REQUIRE(format_code("$x ^ 2$") == "$x ^{2}$");
+        }
+
+        SECTION("spaces inside braces preserved") {
+            REQUIRE(format_code("$b ^ { 2 }$") == "$b ^{ 2 }$");
+        }
     }
 
     TEST_CASE("R2: unknown commands are not modified", "[formatter][R2]") {
