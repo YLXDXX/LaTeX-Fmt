@@ -54,7 +54,7 @@ latex-fmt --md < input.md > output.tex
 
 ## 功能特性
 
-以下格式化规则**默认全部启用**，可通过命令行参数关闭。
+以下格式化规则**可通过命令行参数控制开启或关闭**。
 
 | 规则 | 说明 |
 |------|------|
@@ -74,6 +74,7 @@ latex-fmt --md < input.md > output.tex
 | 语法检查 | `--syntax-check` 检查环境/花括号/数学定界符配对，报告位置 |
 | 语法修复 | `--syntax-fix` 基于语法检查结果自动补全缺失的 `}` `]` `$` `$$` `\end` 等 |
 | 删除公式编号 | `--remove-tags` 删除 `\tag{...}` 和 `\tag*{...}` 命令 |
+| Markdown 转换 | `--md` 将 Markdown 输入转换为 LaTeX 代码并格式化 |
 
 ### 可配置参数
 
@@ -256,6 +257,15 @@ display_math_style = bracket
 
 # 行内公式输出样式: dollar / bracket
 inline_math_style = dollar
+
+# 其他格式化选项
+blank_line_compress = true
+trailing_whitespace_remove = true
+display_math_format = true
+math_delimiter_unify = true
+wrap = false
+remove_tags = false
+context_chars = 10
 ```
 
 ## 项目结构
