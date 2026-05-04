@@ -587,6 +587,35 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("Inline math: configurable style", "[formatter][inline_math]") {
+        SECTION("dollar style (default)") {
+            FormatConfig cfg;
+            cfg.inline_math_style = latex_fmt::InlineMathStyle::Dollar;
+            REQUIRE(format_code_config("\\(x\\)", cfg) == "$x$");
+        }
+
+        SECTION("bracket style") {
+            FormatConfig cfg;
+            cfg.inline_math_style = latex_fmt::InlineMathStyle::Bracket;
+            REQUIRE(format_code_config("\\(x\\)", cfg) == "\\(x\\)");
+            REQUIRE(format_code_config("$x$", cfg) == "\\(x\\)");
+        }
+
+        SECTION("mixed delimiters unified to bracket") {
+            FormatConfig cfg;
+            cfg.inline_math_style = latex_fmt::InlineMathStyle::Bracket;
+            REQUIRE(format_code_config("\\(x\\) and $y$", cfg) == "\\(x\\) and \\(y\\)");
+        }
+
+        SECTION("no-unify preserves original") {
+            FormatConfig cfg;
+            cfg.math_delimiter_unify = false;
+            cfg.inline_math_style = latex_fmt::InlineMathStyle::Bracket;
+            REQUIRE(format_code_config("$x$", cfg) == "$x$");
+            REQUIRE(format_code_config("\\(x\\)", cfg) == "\\(x\\)");
+        }
+    }
+
     TEST_CASE("Environment: bracket group and comment formatting", "[formatter][edge]") {
         SECTION("closing bracket indented inside environment") {
             auto result = format_code(

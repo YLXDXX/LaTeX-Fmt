@@ -6,6 +6,7 @@
 namespace latex_fmt {
 
 enum class DisplayMathStyle { Dollar, Bracket, Equation, EquationStar };
+enum class InlineMathStyle { Dollar, Bracket };
 
 struct FormatConfig {
     int indent_width = 2;
@@ -18,6 +19,7 @@ struct FormatConfig {
     bool display_math_format = true;
     bool math_delimiter_unify = true;
     DisplayMathStyle display_math_style = DisplayMathStyle::Dollar;
+    InlineMathStyle inline_math_style = InlineMathStyle::Dollar;
     bool wrap = false;
     bool wrap_paragraphs = false;
     bool remove_tags = false;
@@ -57,6 +59,8 @@ struct FormatConfig {
                 math_delimiter_unify = parse_bool(value, true);
             } else if (key == "display_math_style") {
                 display_math_style = parse_display_math_style(value);
+            } else if (key == "inline_math_style") {
+                inline_math_style = parse_inline_math_style(value);
             } else if (key == "wrap") {
                 wrap = parse_bool(value, false);
             } else if (key == "wrap_paragraphs") {
@@ -96,6 +100,11 @@ private:
         if (v == "equation") return DisplayMathStyle::Equation;
         if (v == "equation*" || v == "equation*") return DisplayMathStyle::EquationStar;
         return DisplayMathStyle::Dollar;
+    }
+
+    static InlineMathStyle parse_inline_math_style(const std::string& v) {
+        if (v == "bracket" || v == "\\(") return InlineMathStyle::Bracket;
+        return InlineMathStyle::Dollar;
     }
 
     static bool parse_bool(const std::string& v, bool default_val) {

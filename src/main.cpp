@@ -49,6 +49,8 @@ static void print_help(const char* prog) {
         << "  --keep-trailing-spaces   Preserve trailing whitespace\n"
         << "  --no-display-math-format Disable display math standalone line formatting\n"
         << "  --no-math-unify          Disable math delimiter unification\n"
+        << "  --inline-math-style=S    Inline math output style: dollar ($), bracket (\\(\\))\n"
+        << "                           (default: dollar)\n"
         << "  --display-math-style=S   Display math output style: dollar ($$), bracket (\\[\\]),\n"
         << "                           equation, equation* (default: dollar)\n"
         << "  --wrap                   Wrap long lines at word boundaries\n"
@@ -235,6 +237,19 @@ int main(int argc, char* argv[]) {
         }
         if (arg == "--math-unify") {
             config.math_delimiter_unify = true;
+            continue;
+        }
+        if (arg.compare(0, 20, "--inline-math-style=") == 0) {
+            std::string val(arg.substr(20));
+            if (val == "dollar" || val == "$") {
+                config.inline_math_style = latex_fmt::InlineMathStyle::Dollar;
+            } else if (val == "bracket" || val == "\\(") {
+                config.inline_math_style = latex_fmt::InlineMathStyle::Bracket;
+            } else {
+                std::cerr << "latex-fmt: error: invalid inline math style '" << val
+                          << "'. Valid: dollar, bracket\n";
+                return 1;
+            }
             continue;
         }
         if (arg.compare(0, 21, "--display-math-style=") == 0) {

@@ -469,23 +469,23 @@ namespace latex_fmt {
             }
             flushPendingSpace();
 
-            bool use_dollar = config_.math_delimiter_unify || n.is_dollar_form;
-            if (use_dollar) {
-                writeText("$");
+            std::string delim_open, delim_close;
+            if (!config_.math_delimiter_unify) {
+                delim_open = n.is_dollar_form ? "$" : "\\(";
+                delim_close = n.is_dollar_form ? "$" : "\\)";
             } else {
-                writeText("\\(");
+                bool use_dollar = (config_.inline_math_style == InlineMathStyle::Dollar);
+                delim_open = use_dollar ? "$" : "\\(";
+                delim_close = use_dollar ? "$" : "\\)";
             }
 
+            writeText(delim_open);
             endOutput(CharCategory::ASCII);
             for (const auto& child : n.children) {
                 visitNode(*child);
             }
             pending_sub_super_brace_ = false;
-            if (use_dollar) {
-                writeText("$");
-            } else {
-                writeText("\\)");
-            }
+            writeText(delim_close);
             endOutput(CharCategory::ASCII);
         }
 

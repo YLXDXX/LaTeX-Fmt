@@ -695,3 +695,41 @@ TEST_CASE("CLI: --display-math-style", "[cli]") {
 
     std::filesystem::remove(f);
 }
+
+TEST_CASE("CLI: --inline-math-style", "[cli]") {
+    std::string f;
+    {
+        std::ofstream ofs("/tmp/.test-latex-fmt-ims.tex");
+        ofs << "$x$ and \\(y\\)";
+        f = "/tmp/.test-latex-fmt-ims.tex";
+    }
+
+    SECTION("default is dollar style") {
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("$x$") != std::string::npos);
+        REQUIRE(r.output.find("\\(y\\)") == std::string::npos);
+    }
+
+    SECTION("bracket style unifies to \\(\\)") {
+        auto r = run_cmd("--inline-math-style=bracket " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("$") == std::string::npos);
+        REQUIRE(r.output.find("\\(x\\)") != std::string::npos);
+        REQUIRE(r.output.find("\\(y\\)") != std::string::npos);
+    }
+
+    SECTION("invalid style returns error") {
+        auto r = run_cmd("--inline-math-style=invalid " + f);
+        REQUIRE(r.exit_code != 0);
+    }
+
+    SECTION("no-unify preserves original") {
+        auto r = run_cmd("--no-math-unify --inline-math-style=bracket " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("$x$") != std::string::npos);
+        REQUIRE(r.output.find("\\(y\\)") != std::string::npos);
+    }
+
+    std::filesystem::remove(f);
+}

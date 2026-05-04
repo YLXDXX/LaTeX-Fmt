@@ -58,7 +58,7 @@ latex-fmt --md < input.md > output.tex
 
 | 规则 | 说明 |
 |------|------|
-| 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$`（行间公式样式可通过 `--display-math-style` 配置） |
+| 数学定界符统一 | `\(...\)` → `$...$`，`\[...\]` → `$$...$$`（行内/行间公式样式可通过 `--inline-math-style` / `--display-math-style` 配置） |
 | 花括号补全 | `\frac12` → `\frac{1}{2}`、`\sqrt3` → `\sqrt{3}`（仅限已知命令）；数学模式上下标简写 `x_a` → `x_{a}`、`x^2` → `x^{2}` |
 | 去冗余空白 | 文本模式多个空格压缩为 1 个；数学模式保留空格 |
 | 缩进与换行 | 按 `\begin`/`\end` 层级自动缩进（默认每层 2 空格） |
@@ -90,6 +90,7 @@ latex-fmt --md < input.md > output.tex
 | `--no-display-math-format` / `--display-math-format` | 开启 | `$$...$$` 独立成行 |
 | `--no-math-unify` / `--math-unify` | 开启 | 数学定界符统一为 `$` / `$$` |
 | `--display-math-style=S` | `dollar` | 行间公式输出样式：`dollar`（`$$`）、`bracket`（`\[`）、`equation`、`equation*` |
+| `--inline-math-style=S` | `dollar` | 行内公式输出样式：`dollar`（`$`）、`bracket`（`\(`） |
 | `--max-line-width=N` | 0（关闭） | 当 N > 0 时，超长行触发警告 |
 | `--wrap` | 关闭 | 配合 `--max-line-width` 自动折行 |
 | `--wrap-paragraphs` | 关闭 | 纯文本段落长行自动折行 |
@@ -252,6 +253,9 @@ comment_normalize = true
 
 # 行间公式输出样式: dollar / bracket / equation / equation*
 display_math_style = bracket
+
+# 行内公式输出样式: dollar / bracket
+inline_math_style = dollar
 ```
 
 ## 项目结构
