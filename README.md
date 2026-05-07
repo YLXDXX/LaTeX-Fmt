@@ -77,6 +77,7 @@ latex-fmt --md < input.md > output.tex
 | 语法修复 | `--syntax-fix` 基于语法检查结果自动补全缺失的 `}` `]` `$` `$$` `\end` 等 |
 | 删除公式编号 | `--remove-tags` 删除 `\tag{...}` 和 `\tag*{...}` 命令 |
 | Markdown 转换 | `--md` 将 Markdown 输入转换为 LaTeX 代码并格式化 |
+| 列表项换行 | `--item-newline` 将 `\item` 内容放在独立行，`--item-newline-threshold=N` 设置触发换行的最小字符数 |
 
 ### 可配置参数
 
@@ -101,6 +102,8 @@ latex-fmt --md < input.md > output.tex
 | `--syntax-fix` | 关闭 | 自动补全缺失的 `}` `]` `$` `\end` 等定界符 |
 | `--remove-tags` | 关闭 | 删除公式中的 `\tag{...}` / `\tag*{...}` 命令 |
 | `--context-chars=N` | 10 | `--syntax-check` 错误信息中显示的前后文字数 |
+| `--item-newline` | 关闭 | 将 `\item` 内容放在独立行并缩进 |
+| `--item-newline-threshold=N` | 0 | `\item` 内容超过 N 个字符时才换行（0 = 始终换行） |
 
 ## 使用指南
 
@@ -268,6 +271,10 @@ math_delimiter_unify = true
 wrap = false
 remove_tags = false
 context_chars = 10
+
+# 列表项换行: true/false; 换行阈值: 字符数 (0 = 始终换行)
+item_newline = false
+item_newline_threshold = 0
 ```
 
 ## 项目结构

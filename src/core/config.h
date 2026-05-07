@@ -20,6 +20,8 @@ struct FormatConfig {
     bool math_delimiter_unify = true;
     DisplayMathStyle display_math_style = DisplayMathStyle::Dollar;
     InlineMathStyle inline_math_style = InlineMathStyle::Dollar;
+    bool item_newline = false;
+    int item_newline_threshold = 0;
     bool wrap = false;
     bool wrap_paragraphs = false;
     bool remove_tags = false;
@@ -61,6 +63,10 @@ struct FormatConfig {
                 display_math_style = parse_display_math_style(value);
             } else if (key == "inline_math_style") {
                 inline_math_style = parse_inline_math_style(value);
+            } else if (key == "item_newline") {
+                item_newline = parse_bool(value, false);
+            } else if (key == "item_newline_threshold") {
+                item_newline_threshold = parse_int(value, 0);
             } else if (key == "wrap") {
                 wrap = parse_bool(value, false);
             } else if (key == "wrap_paragraphs") {

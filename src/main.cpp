@@ -65,6 +65,8 @@ static void print_help(const char* prog) {
         << "  --remove-tags            Remove \\tag{...} commands from formulas\n"
         << "  --context-chars=N        Context chars shown in --syntax-check errors (default: 10)\n"
         << "  --md                     Treat input as Markdown, convert to LaTeX and format\n"
+        << "  --item-newline           Put \\item content on a new line (in itemize/enumerate/description)\n"
+        << "  --item-newline-threshold=N  Min chars to force \\item content newline (default: 0 = always)\n"
         << "  --config-file=<path>     Read config from file (default: .latexfmtrc)\n"
         << "\n"
         << "Examples:\n"
@@ -286,6 +288,16 @@ int main(int argc, char* argv[]) {
         }
         if (arg == "--md") {
             md_mode = true;
+            continue;
+        }
+        if (arg == "--item-newline") {
+            config.item_newline = true;
+            config.item_newline_threshold = 0;
+            continue;
+        }
+        if (arg.compare(0, 25, "--item-newline-threshold=") == 0) {
+            config.item_newline = true;
+            config.item_newline_threshold = parse_int_or_exit(arg.substr(25), "--item-newline-threshold");
             continue;
         }
         if (arg == "--syntax-check") {

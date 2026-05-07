@@ -616,6 +616,53 @@ namespace latex_fmt {
         }
     }
 
+    TEST_CASE("List: item newline formatting", "[formatter][edge]") {
+        SECTION("item content on new line with --item-newline") {
+            FormatConfig cfg;
+            cfg.item_newline = true;
+            auto result = format_code_config(
+                "\\begin{itemize}\n"
+                "\\item First\n"
+                "\\item Second\n"
+                "\\end{itemize}\n", cfg);
+            REQUIRE(result.find("\\item\n") != std::string::npos);
+            REQUIRE(result.find("  First") != std::string::npos);
+        }
+
+        SECTION("item with optional arg on new line") {
+            FormatConfig cfg;
+            cfg.item_newline = true;
+            auto result = format_code_config(
+                "\\begin{enumerate}\n"
+                "\\item[Step 1] Do this\n"
+                "\\end{enumerate}\n", cfg);
+            REQUIRE(result.find("\\item[Step 1]") != std::string::npos);
+            REQUIRE(result.find("  Do this") != std::string::npos);
+        }
+
+        SECTION("threshold filters short content") {
+            FormatConfig cfg;
+            cfg.item_newline = true;
+            cfg.item_newline_threshold = 20;
+            auto result = format_code_config(
+                "\\begin{itemize}\n"
+                "\\item Short\n"
+                "\\item A very long item that exceeds threshold\n"
+                "\\end{itemize}\n", cfg);
+            REQUIRE(result.find("\\item Short") != std::string::npos);
+            REQUIRE(result.find("  A very long") != std::string::npos);
+        }
+
+        SECTION("disabled by default") {
+            auto result = format_code(
+                "\\begin{itemize}\n"
+                "\\item First\n"
+                "\\item Second\n"
+                "\\end{itemize}\n");
+            REQUIRE(result.find("\\item First") != std::string::npos);
+        }
+    }
+
     TEST_CASE("Environment: bracket group and comment formatting", "[formatter][edge]") {
         SECTION("closing bracket indented inside environment") {
             auto result = format_code(

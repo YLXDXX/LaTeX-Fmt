@@ -171,7 +171,56 @@ namespace latex_fmt {
                 at_line_start_ = true;
                 endOutput(CharCategory::Other);
             } else {
-                for (const auto& child : n.children) {
+                bool is_list = (n.name == "itemize" || n.name == "enumerate" || n.name == "description");
+                bool item_nl = config_.item_newline && is_list;
+
+                for (size_t i = 0; i < n.children.size(); ++i) {
+                    const auto& child = n.children[i];
+
+                    if (item_nl) {
+                        if (auto* cmd = dynamic_cast<const Command*>(child.get())) {
+                            if (cmd->name == "item") {
+                                visitNode(*child);
+
+                                int total_len = 0;
+                                size_t j = i + 1;
+                                while (j < n.children.size()) {
+                                    const auto& next = n.children[j];
+                                    if (auto* nc = dynamic_cast<const Command*>(next.get())) {
+                                        if (nc->name == "item") break;
+                                        for (const auto& arg : nc->args) {
+                                            count_text_len(*arg, total_len);
+                                        }
+                                    }
+                                    if (auto* t = dynamic_cast<const Text*>(next.get())) {
+                                        for (char ch : t->content) {
+                                            if (ch != ' ' && ch != '\t' && ch != '\n') {
+                                                total_len++;
+                                            }
+                                        }
+                                    }
+                                    j++;
+                                }
+
+                                if (config_.item_newline_threshold == 0 || total_len > config_.item_newline_threshold) {
+                                    ensureNewline();
+                                    indent_level_++;
+                                    while (i + 1 < n.children.size()) {
+                                        i++;
+                                        const auto& nc = n.children[i];
+                                        if (auto* ncc = dynamic_cast<const Command*>(nc.get())) {
+                                            if (ncc->name == "item") { i--; break; }
+                                        }
+                                        visitNode(*nc);
+                                    }
+                                    indent_level_--;
+                                    ensureNewline();
+                                }
+                                continue;
+                            }
+                        }
+                    }
+
                     visitNode(*child);
                 }
             }
@@ -646,6 +695,22 @@ namespace latex_fmt {
 
             std::string str() const { return v.output_.str(); }
         };
+
+        static void count_text_len(const ASTNode& n, int& len) {
+            if (auto* t = dynamic_cast<const Text*>(&n)) {
+                for (char ch : t->content) {
+                    if (ch != ' ' && ch != '\t' && ch != '\n') len++;
+                }
+            } else if (auto* g = dynamic_cast<const Group*>(&n)) {
+                for (const auto& child : g->children) {
+                    count_text_len(*child, len);
+                }
+            } else if (auto* c = dynamic_cast<const Command*>(&n)) {
+                for (const auto& arg : c->args) {
+                    count_text_len(*arg, len);
+                }
+            }
+        }
 
         void endOutput(CharCategory cat) {
             last_char_cat_ = cat;

@@ -733,3 +733,31 @@ TEST_CASE("CLI: --inline-math-style", "[cli]") {
 
     std::filesystem::remove(f);
 }
+
+TEST_CASE("CLI: --item-newline", "[cli]") {
+    std::string f;
+    {
+        std::ofstream ofs("/tmp/.test-latex-fmt-inl.tex");
+        ofs << "\\begin{itemize}\n\\item First\n\\item Second\n\\end{itemize}\n";
+        f = "/tmp/.test-latex-fmt-inl.tex";
+    }
+
+    SECTION("--item-newline puts content on next line") {
+        auto r = run_cmd("--item-newline " + f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\item\n") != std::string::npos);
+    }
+
+    SECTION("disabled by default") {
+        auto r = run_cmd(f);
+        REQUIRE(r.exit_code == 0);
+        REQUIRE(r.output.find("\\item First") != std::string::npos);
+    }
+
+    SECTION("threshold option works") {
+        auto r = run_cmd("--item-newline --item-newline-threshold=50 " + f);
+        REQUIRE(r.exit_code == 0);
+    }
+
+    std::filesystem::remove(f);
+}
