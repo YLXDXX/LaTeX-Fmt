@@ -204,7 +204,6 @@ namespace latex_fmt {
 
                                 if (config_.item_newline_threshold == 0 || total_len > config_.item_newline_threshold) {
                                     ensureNewline();
-                                    indent_level_++;
                                     while (i + 1 < n.children.size()) {
                                         i++;
                                         const auto& nc = n.children[i];
@@ -213,7 +212,6 @@ namespace latex_fmt {
                                         }
                                         visitNode(*nc);
                                     }
-                                    indent_level_--;
                                     ensureNewline();
                                 }
                                 continue;

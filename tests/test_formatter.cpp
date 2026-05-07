@@ -661,6 +661,18 @@ namespace latex_fmt {
                 "\\end{itemize}\n");
             REQUIRE(result.find("\\item First") != std::string::npos);
         }
+
+        SECTION("item content at same indent level as item") {
+            FormatConfig cfg;
+            cfg.item_newline = true;
+            auto result = format_code_config(
+                "\\begin{itemize}\n"
+                "\\item First\n"
+                "\\end{itemize}\n", cfg);
+            REQUIRE(result.find("  \\item\n") != std::string::npos);
+            REQUIRE(result.find("  First") != std::string::npos);
+            REQUIRE(result.find("    First") == std::string::npos);
+        }
     }
 
     TEST_CASE("Environment: bracket group and comment formatting", "[formatter][edge]") {
@@ -1359,6 +1371,29 @@ namespace latex_fmt {
                 "\\begin{document}\n"
                 "\\begin{figure}\n"
                 "content\n"
+                "\\end{document}");
+            REQUIRE_FALSE(errors.empty());
+        }
+
+        SECTION("nested list environments are valid") {
+            auto errors = check_syntax(
+                "\\begin{document}\n"
+                "\\begin{enumerate}\n"
+                "\\item First\n"
+                "\\begin{enumerate}\n"
+                "\\item Sub\n"
+                "\\end{enumerate}\n"
+                "\\end{enumerate}\n"
+                "\\end{document}");
+            REQUIRE(errors.empty());
+        }
+
+        SECTION("nested document is still an error") {
+            auto errors = check_syntax(
+                "\\begin{document}\n"
+                "\\begin{document}\n"
+                "text\n"
+                "\\end{document}\n"
                 "\\end{document}");
             REQUIRE_FALSE(errors.empty());
         }

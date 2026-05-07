@@ -176,7 +176,7 @@ namespace latex_fmt {
         }
 
         void checkEnvironment(const Environment& env) {
-            if (!env_stack_.empty() && env_stack_.back().first == env.name) {
+            if (env.name == "document" && !env_stack_.empty() && env_stack_.back().first == env.name) {
                 auto [line, col] = offsetToLineCol(env.source.begin_offset);
                 makeError(line, col,
                     "nested duplicate environment '\\begin{" + env.name + "}'");
